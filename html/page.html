@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directory Listing</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            background-color: #fafafa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 50px auto;
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .header {
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            padding: 8px 16px;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        ul li:last-child {
+            border-bottom: none;
+        }
+
+        a {
+            text-decoration: none;
+            color: #0366d6;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #586069;
+        }
+
+        .icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            vertical-align: text-bottom;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Directory Listing for /data/11912113/</h1>
+    </div>
+    <ul>
+        <!-- Repeat this list item for each file or directory -->
+        <li><a href="#">
+            <svg class="icon" aria-hidden="true">
+                <use xlink:href="#icon-folder"/>
+            </svg>
+            <span>../</span></a></li>
+        <li><a href="#">
+            <svg class="icon" aria-hidden="true">
+                <use xlink:href="#icon-file"/>
+            </svg>
+            <span>123.png</span></a></li>
+        <li><a href="#">
+            <svg class="icon" aria-hidden="true">
+                <use xlink:href="#icon-file"/>
+            </svg>
+            <span>abc.py</span></a></li>
+        <!-- Add other files -->
+
+        <!-- Directories will go here -->
+        <!-- Files will go here -->
+    </ul>
+    <div class="footer">
+        My Custom Directory Listing Styled Like GitHub
+    </div>
+</div>
+</body>
+</html>
