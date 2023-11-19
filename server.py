@@ -30,16 +30,13 @@ class Server:
                     print(f'Connection from {client_address}')
 
                     # TODO: receive data --> parse as request --> respond
+                    data = b""
                     while True:
-                        data = connection.recv(16)
-                        print(f'received "{data}"')
-                        if data:
-                            print('sending data back to the client')
-                            connection.sendall(data)
-                        else:
-                            print('no more data from', client_address)
+                        chunk = connection.recv(4096)
+                        if not chunk:
                             break
-
+                        data += chunk
+                    data = data.decode('utf-8')  # Convert bytes to string
 
 
 
