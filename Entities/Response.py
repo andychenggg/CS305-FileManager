@@ -1,6 +1,8 @@
+from html_package.HTMLManager import HTMLManager
+
 
 class Response:
-    statusCode = {
+    code_massage = {
         200: "OK",
         206: "Partial Content",
         301: "Redirect",
@@ -13,4 +15,26 @@ class Response:
         502: "Bad Gateway",
         503: "Service Temporarily Unavailable"
     }
-    http_version = "HTTP/1.1"
+
+    def __init__(self):
+        self.http_version: str = "HTTP/1.1"
+        self.statusCode: str = "200"
+        self.statusMessage: str = "OK"
+        self.headers: dict = {
+            "Content-Type": "text/html; charset=utf-8"
+        }
+        self.body: str = ""
+        self.htmlM: HTMLManager = HTMLManager()
+
+        self.need_connection = True
+
+    def parse_resp_to_str(self) -> str:
+        # Create the HTTP response
+        start_line = self.http_version + " " + self.statusCode + " " + self.statusMessage + "\r\n"
+        body = self.htmlM.generate_html()
+        self.headers["Content-Length"] = str(len(body.encode("utf-8")))
+        headers_line = ""
+        for key in self.headers:
+            headers_line = headers_line + key + ": " + self.headers[key] + "\r\n"
+        empty_line = "\r\n"
+        return start_line + headers_line + empty_line + body
