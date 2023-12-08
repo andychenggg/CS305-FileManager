@@ -24,7 +24,9 @@ def authorize(req: Request, resp: Response, cmd: Command, config: Configuration)
         resp.statusCode = "401"
         resp.statusMessage = resp.code_massage[resp.statusCode]
         resp.headers["WWW-Authenticated"] = "Basic realm=\"Authorization Required\""
+        resp.body = "Access to this resource requires authentication"
     else:
         cmd.resp_imm = True
         resp.statusCode = "401"
         resp.statusMessage = resp.code_massage[resp.statusCode]
+        resp.body = "Access to this resource requires authentication"

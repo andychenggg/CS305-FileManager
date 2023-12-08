@@ -51,7 +51,7 @@ class Server:
                 print('Server closed')
 
     def conn_thread(self, conn: socket, address: tuple, index: int):
-        try:
+        # try:
             print(f'Connection from {address}, thread {index}')
             # Keep the connection open to handle multiple requests
             config = Configuration()
@@ -69,12 +69,12 @@ class Server:
                 if cmd.close_conn:
                     break
 
-        except Exception as e:
-            print(f'An error occurred in thread {index}: {e}')
-        finally:
-            # Close the connection
-            conn.close()
-            print(f'thread {index}: Connection closed.')
+        # except Exception as e:
+        #     print(f'An error occurred in thread {index}: {e}')
+        # finally:
+        #     # Close the connection
+        #     conn.close()
+        #     print(f'thread {index}: Connection closed.')
 
     def handle(self, origin_str: bytes, config: Configuration) -> (bytes, Command):
         req = Request(origin_str.decode('utf-8'))
