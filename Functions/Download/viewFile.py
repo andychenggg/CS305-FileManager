@@ -4,6 +4,12 @@ import os
 
 def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
     web_url: str = req.path
+    if req.method.upper() != 'GET':
+        resp.body = '405 Method Not Allowed'
+        responseCode(resp, cmd, "405")
+        print('405 Method Not Allowed')
+        return
+
     split_url = web_url.strip().split('?')
     path = split_url[0]
     para = split_url[1] if len(split_url) > 1 else 'sustech-http=0'
@@ -33,6 +39,7 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
             return
         folders = []
         files = []
+        # TODO 在html加个 . 和 ..
         for item in items:
             item_path = os.path.join(project_directory, item)
             if os.path.isdir(item_path):
