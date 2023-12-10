@@ -1,0 +1,22 @@
+# get file list for html
+GET http://localhost:8080/?sustech-http=0
+Accept: application/json
+Authorization: Basic dXNlcjE6cGFzczE=
+
+###
+# get file list for list
+GET http://localhost:8080/?sustech-http=1
+Accept: application/json
+Authorization: Basic dXNlcjE6cGFzczE=
+
+###
+# get file list for bad request in wrong format
+GET http://localhost:8080/?sustech-http=0&format=1
+Accept: application/json
+Authorization: Basic dXNlcjE6cGFzczE=
+
+###
+# get file list for bad request in wrong code
+GET http://localhost:8080/?sustech-http=1
+Accept: application/json
+Authorization: Basic dXNlcjE6cGFzczE=
