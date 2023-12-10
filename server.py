@@ -40,7 +40,10 @@ class Server:
             while True:
                 print('Waiting for a connection...')
                 connection, client_address = self.socket.accept()
-                client_thread = threading.Thread(target=self.conn_thread, args=(connection, client_address, thread_index))
+                client_thread = threading.Thread(
+                    target=self.conn_thread,
+                    args=(connection, client_address, thread_index)
+                )
                 thread_index += 1
                 client_thread.start()
 
@@ -55,7 +58,7 @@ class Server:
         # try:
             print(f'Connection from {address}, thread {index}')
             # Keep the connection open to handle multiple requests
-            config = Configuration()
+            config = Configuration(index)
             while True:
                 data = conn.recv(4096)
                 if not data:
