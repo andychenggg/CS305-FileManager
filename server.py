@@ -4,22 +4,23 @@ import threading
 
 from Functions.PersistentConn import persistent_connection_process
 from Functions.Authentication.Authentication import authorize
+from Functions.Download.viewFile import viewFile
 from html_package.HTMLManager import HTMLManager
 from Entities.Request import Request
 from Entities.Response import Response
 from Entities.Command import Command
 from Entities.Configuration import Configuration
 
-
 class Server:
     def __init__(self, host, port):
         self.host = host
         self.port = port
         self.socket = None
-        self.html = HTMLManager()
+        # self.html = HTMLManager()
         self.function_chain = [
             persistent_connection_process,
-            authorize
+            authorize,
+            viewFile
         ]
 
     def start(self):
@@ -60,7 +61,7 @@ class Server:
                 if not data:
                     break
 
-                print(f"data from thread {index}")
+                # print(f"data from thread {index}")
                 print(data.decode('utf-8'))
 
                 resp, cmd = self.handle(data, config)
@@ -78,20 +79,21 @@ class Server:
 
     def handle(self, origin_str: bytes, config: Configuration) -> (bytes, Command):
         req = Request(origin_str.decode('utf-8'))
+        print('req path', req.path)
         resp = Response()
         cmd = Command()
         for func in self.function_chain:
             func(req, resp, cmd, config)
             if cmd.close_conn or cmd.resp_imm:
                 return resp.parse_resp_to_str().encode("utf-8"), cmd
-        print(resp.parse_resp_to_str())
+        # print(resp.parse_resp_to_str())
         return resp.parse_resp_to_str().encode("utf-8"), cmd
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TCP Server for handling connections.')
     parser.add_argument('-i', '--host', default='localhost', help='Host address')
-    parser.add_argument('-p', '--port', type=int, default=8080, help='Port number')
+    parser.add_argument('-p', '--port', type=int, default=8081, help='Port number')
 
     args = parser.parse_args()
 

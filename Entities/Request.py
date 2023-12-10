@@ -1,4 +1,3 @@
-from html_package.HTMLManager import HTMLManager
 class Request:
     # content_type = "Content-Type"
     # content_length = "Content-Length"
