@@ -96,7 +96,7 @@ class Server:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TCP Server for handling connections.')
     parser.add_argument('-i', '--host', default='localhost', help='Host address')
-    parser.add_argument('-p', '--port', type=int, default=8081, help='Port number')
+    parser.add_argument('-p', '--port', type=int, default=8080, help='Port number')
 
     args = parser.parse_args()
 
