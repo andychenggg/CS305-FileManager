@@ -27,7 +27,6 @@ class Response:
         self.htmlM: HTMLManager = HTMLManager()
         self.file_content: bytes = b""
         self.body: str = self.htmlM.generate_html()
-
         self.need_connection = True
 
     def setContentType(self, type: str):

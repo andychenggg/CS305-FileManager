@@ -1,10 +1,14 @@
+import base64
 import socket
 import argparse
+import sys
 import threading
 
 from Functions.PersistentConn import persistent_connection_process
 from Functions.Authentication.Authentication import authorize
 from Functions.Download.viewFile import viewFile
+from Functions.Https.KeysManager import KeyManager
+from Functions.Https.HttpsManager import getPublicKey, setSymKey
 from html_package.HTMLManager import HTMLManager
 from Entities.Request import Request
 from Entities.Response import Response
@@ -19,6 +23,8 @@ class Server:
         self.socket = None
         # self.html = HTMLManager()
         self.function_chain = [
+            getPublicKey,
+            setSymKey,
             persistent_connection_process,
             authorize,
             viewFile
@@ -69,6 +75,7 @@ class Server:
             print(data.decode('utf-8'))
 
             resp, cmd = self.handle(data, config)
+            print(resp[:3000])
             conn.sendall(resp)
             # Check if the client requests to close the connection
             if cmd.close_conn:
@@ -88,17 +95,24 @@ class Server:
         cmd = Command()
         for func in self.function_chain:
             func(req, resp, cmd, config)
-            if cmd.close_conn or cmd.resp_imm:
-                return resp_encode(resp), cmd
+            if cmd.return_pub_key:
+                return resp.body, cmd  # 直接返回公钥
+            if cmd.resp_imm:
+                return resp_encode(resp, config), cmd
         # print(resp.parse_resp_to_str())
-        return resp_encode(resp), cmd
+        return resp_encode(resp, config), cmd
 
 
-def resp_encode(resp: Response) -> bytes:
+def resp_encode(resp: Response, config: Configuration) -> bytes:
+    resp_body = None
     if resp.file:
-        return resp.parse_resp_to_str().encode("utf-8") + resp.file_content
+        resp_body = resp.file_content
     else:
-        return resp.parse_resp_to_str().encode("utf-8") + resp.body.encode("utf-8")
+        resp_body = resp.body.encode("utf-8")
+    if config.keysMan is not None:
+        return resp.parse_resp_to_str().encode("utf-8") + config.keysMan.encrypt(resp_body)
+    else:
+        return resp.parse_resp_to_str().encode("utf-8") + resp_body
 
 
 if __name__ == '__main__':
