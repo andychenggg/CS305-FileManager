@@ -20,20 +20,28 @@ class Response:
         self.http_version: str = "HTTP/1.1"
         self.statusCode: str = "200"
         self.statusMessage: str = "OK"
+        self.file: bool = False
         self.headers: dict = {
             "Content-Type": "text/html; charset=utf-8"
         }
         self.htmlM: HTMLManager = HTMLManager()
+        self.file_content: bytes = b""
         self.body: str = self.htmlM.generate_html()
 
         self.need_connection = True
 
+    def setContentType(self, type: str):
+        self.headers["Content-Type"] = type
+
     def parse_resp_to_str(self) -> str:
         # Create the HTTP response
         start_line = self.http_version + " " + self.statusCode + " " + self.statusMessage + "\r\n"
-        self.headers["Content-Length"] = str(len(self.body.encode("utf-8")))
+        if not self.file:
+            self.headers["Content-Length"] = str(len(self.body.encode("utf-8")))
+        else:
+            self.headers["Content-Length"] = len(self.file_content)
         headers_line = ""
         for key in self.headers:
-            headers_line = headers_line + key + ": " + self.headers[key] + "\r\n"
+            headers_line = headers_line + key + ": " + str(self.headers[key]) + "\r\n"
         empty_line = "\r\n"
-        return start_line + headers_line + empty_line + self.body
+        return start_line + headers_line + empty_line

@@ -27,4 +27,10 @@ POST http://localhost:8080/?sustech-http=0
 Accept: application/json
 Authorization: Basic dXNlcjE6cGFzczE=
 
-
+###
+# get file
+GET http://localhost:8080/item1
+Authorization: Basic dXNlcjE6cGFzczE=
+###
+GET http://localhost:8080/item1
+Authorization: Basic dXNlcjE6cGFzczE=
