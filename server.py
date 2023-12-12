@@ -11,6 +11,7 @@ from Entities.Response import Response
 from Entities.Command import Command
 from Entities.Configuration import Configuration
 
+
 class Server:
     def __init__(self, host, port):
         self.host = host
