@@ -4,17 +4,17 @@ import mimetypes
 
 
 def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
-    web_url: str = req.path
     if req.method.upper() != 'GET':
         resp.body = '405 Method Not Allowed'
         responseCode(resp, cmd, "405")
         print('405 Method Not Allowed')
         return
+    req.arg_path_para()
+    path = req.file_path
 
-    split_url = web_url.strip().split('?')
-    path = split_url[0]
-    para = split_url[1] if len(split_url) > 1 else 'sustech-http=0'
-    print('path:', path, '\npara', para)
+    req.arg_path_para()
+    print('path:', req.path, '\npara', req.paras_dict)
+    print('file_path:', req.file_path)
     if path.endswith('/'):
         project_directory = f'./data{path}'
         # check if the directory exists
@@ -28,11 +28,15 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
         # check parameters is valid
         # flag = 0 is invalid
         # flag = 1|2 is valid, 1 is return html, 2 is simply return the list
+        para = req.paras_dict.get('sustech-http', '0')
+
         flag = 0
-        if para.lower().startswith('sustech-http'):
-            split_para = para.strip().split('=')
-            if len(split_para) == 2 and (split_para[1].strip() == '1' or split_para[1].strip() == '0'):
-                flag = int(split_para[1].strip()) + 1
+        if len(req.paras_dict) <= 1:
+            if para == '0':
+                flag = 1
+            elif para == '1':
+                flag = 2
+
         if not flag:
             resp.body = f'400 Bad Request in {para}'
             responseCode(resp, cmd, "400")
@@ -61,22 +65,41 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
         else:
             resp.body = '[' + ', '.join(folders + files) + ']'
     else:
+        # check parameters is valid
+        chunked_num = req.paras_dict.get('chunked', '0')
+        if len(req.paras_dict) > 1 or chunked_num not in {'0', '1'}:
+            resp.body = f'400 Bad Request in {req.paras_dict}'
+            responseCode(resp, cmd, "400")
+            print(resp.body)
+            return
+        print('chunked_num', chunked_num)
+        # check if the file exists
         file_path = f'./data{path}'
-        try:
-            with open(file_path, 'rb') as file:
-                binary_content = file.read()
-        except FileNotFoundError:
-            resp.file = False
+        if not os.path.isfile(file_path):
             resp.body = f'404 Not Found {file_path}'
             responseCode(resp, cmd, "404")
             print('there is no', file_path)
             return
-        resp.file = True
-        resp.file_content = binary_content
-        mini_type = mimetypes.guess_type(file_path)[0]
-        mini_type = mini_type if mini_type else 'application/octet-stream'
-        print('mini_type', mini_type)
-        resp.setContentType(mini_type)
+        # normal file
+        if chunked_num == '0':
+            try:
+                with open(file_path, 'rb') as file:
+                    binary_content = file.read()
+            except FileNotFoundError:
+                resp.file = False
+                resp.body = f'404 Not Found {file_path}'
+                responseCode(resp, cmd, "404")
+                print('there is no', file_path)
+                return
+            resp.file = True
+            resp.file_content = binary_content
+            mini_type = mimetypes.guess_type(file_path)[0]
+            mini_type = mini_type if mini_type else 'application/octet-stream'
+            resp.set_content_type(mini_type)
+            resp.set_content_length(len(binary_content))
+        else:
+            resp.set_content_type('application/octet-stream')
+            resp.headers['Transfer-Encoding'] = 'chunked'
 
 
 def responseCode(res: Response, cmd: Command, code: str):

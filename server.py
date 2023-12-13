@@ -67,9 +67,12 @@ class Server:
 
             # print(f"data from thread {index}")
             print(data.decode('utf-8'))
-
             resp, cmd = self.handle(data, config)
-            conn.sendall(resp)
+            if cmd.chunked:
+                pass
+            else:
+                conn.sendall(resp)
+
             # Check if the client requests to close the connection
             if cmd.close_conn:
                 break

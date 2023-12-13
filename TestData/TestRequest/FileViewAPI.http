@@ -17,7 +17,7 @@ Authorization: Basic dXNlcjE6cGFzczE=
 
 ###
 # get file list for bad request in wrong code
-GET http://localhost:8080/?sustech-http=1
+GET http://localhost:8080/?sustech-http=2
 Accept: application/json
 Authorization: Basic dXNlcjE6cGFzczE=
 

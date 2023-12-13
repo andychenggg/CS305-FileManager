@@ -14,6 +14,8 @@ class HTMLManager:
         self.files.append(name)
 
     def generate_html(self) -> str:
+        # Generate Header
+        html_header = f'<h1>Directory Listing for {self.current_path}/</h1>\n'
         # Generate the HTML for the directories and files
         directory_html = '\n'.join(f'<li><a href="{directory}">\n'
                                    f'<svg class="icon" aria-hidden="true">\n'
@@ -41,5 +43,6 @@ class HTMLManager:
         # Replace the placeholder comments with the actual directory and file HTML
         html = self.html_template.replace('<!-- Directories will go here -->', directory_html)
         html = html.replace('<!-- Files will go here -->', file_html)
+        html = html.replace('<!-- Header will go here -->', html_header)
 
         return html
