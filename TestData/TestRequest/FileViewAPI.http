@@ -32,5 +32,6 @@ Authorization: Basic dXNlcjE6cGFzczE=
 GET http://localhost:8080/item1
 Authorization: Basic dXNlcjE6cGFzczE=
 ###
-GET http://localhost:8080/item1
+# get chunked file
+GET http://localhost:8080/hashfun.pdf?chunked=1
 Authorization: Basic dXNlcjE6cGFzczE=
