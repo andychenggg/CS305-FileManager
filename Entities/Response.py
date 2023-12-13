@@ -17,29 +17,35 @@ class Response:
     }
 
     def __init__(self):
+        # header
         self.http_version: str = "HTTP/1.1"
         self.statusCode: str = "200"
         self.statusMessage: str = "OK"
-        self.file: bool = False
         self.headers: dict = {
             "Content-Type": "text/html; charset=utf-8"
         }
+        # if file is true, the content is in file_content
+        self.file: bool = False
+        # content save in body
         self.htmlM: HTMLManager = HTMLManager()
         self.file_content: bytes = b""
         self.body: str = self.htmlM.generate_html()
+        self.chunk_path: str = ''
 
         self.need_connection = True
 
-    def setContentType(self, type: str):
+    def set_content_type(self, type: str):
         self.headers["Content-Type"] = type
+
+    def set_content_length(self, length: int):
+        self.headers["Content-Length"] = length
 
     def parse_resp_to_str(self) -> str:
         # Create the HTTP response
         start_line = self.http_version + " " + self.statusCode + " " + self.statusMessage + "\r\n"
         if not self.file:
             self.headers["Content-Length"] = str(len(self.body.encode("utf-8")))
-        else:
-            self.headers["Content-Length"] = len(self.file_content)
+
         headers_line = ""
         for key in self.headers:
             headers_line = headers_line + key + ": " + str(self.headers[key]) + "\r\n"

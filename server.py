@@ -67,9 +67,13 @@ class Server:
 
             # print(f"data from thread {index}")
             print(data.decode('utf-8'))
-
             resp, cmd = self.handle(data, config)
-            conn.sendall(resp)
+            if cmd.chunked:
+                conn.sendall(resp_encode(resp))
+                send_chunk_file(resp, conn)
+            else:
+                conn.sendall(resp_encode(resp))
+
             # Check if the client requests to close the connection
             if cmd.close_conn:
                 break
@@ -81,7 +85,7 @@ class Server:
     #     conn.close()
     #     print(f'thread {index}: Connection closed.')
 
-    def handle(self, origin_str: bytes, config: Configuration) -> (bytes, Command):
+    def handle(self, origin_str: bytes, config: Configuration) -> (Response, Command):
         req = Request(origin_str.decode('utf-8'))
         print('req path', req.path)
         resp = Response()
@@ -89,9 +93,21 @@ class Server:
         for func in self.function_chain:
             func(req, resp, cmd, config)
             if cmd.close_conn or cmd.resp_imm:
-                return resp_encode(resp), cmd
+                return resp, cmd
         # print(resp.parse_resp_to_str())
-        return resp_encode(resp), cmd
+        return resp, cmd
+
+
+def send_chunk_file(resp: Response, conn: socket):
+    with open(resp.chunk_path, 'rb') as file:
+        while True:
+            chunk = file.read(1024)
+            if not chunk:
+                break
+            chunk_len = f"{len(chunk):x}".encode('utf-8')
+            print('chunked len', chunk_len)
+            conn.sendall(chunk_len + b'\r\n' + chunk + b'\r\n')
+        conn.sendall(b'0\r\n\r\n')
 
 
 def resp_encode(resp: Response) -> bytes:
