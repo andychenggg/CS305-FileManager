@@ -63,11 +63,6 @@ def responseCode(res: Response, cmd: Command, code: str):
     if not code.startswith("2"):
         cmd.resp_imm = True
 
-def delete():
-    # TODO:
-    print('delete')
-
-
 def parse_multipart_form_data(data, boundary):
     print('data\n'+data)
     parts = data.split('--'+boundary)
