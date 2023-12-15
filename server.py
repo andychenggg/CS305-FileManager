@@ -5,6 +5,7 @@ import threading
 from Functions.PersistentConn import persistent_connection_process
 from Functions.Authentication.Authentication import authorize
 from Functions.Download.viewFile import viewFile
+from Functions.UplAndDel.UplAndDel import uplAndDel
 from html_package.HTMLManager import HTMLManager
 from Entities.Request import Request
 from Entities.Response import Response
@@ -21,7 +22,8 @@ class Server:
         self.function_chain = [
             persistent_connection_process,
             authorize,
-            viewFile
+            viewFile,
+            uplAndDel
         ]
 
     def start(self):
@@ -91,6 +93,14 @@ class Server:
         resp = Response()
         cmd = Command()
         for func in self.function_chain:
+            for i in range(3):
+                if i < 2:
+                    func = self.function_chain[i]
+                else:
+                    if req.path.startswith('/upload') or req.path.startswith('/delete'):
+                        func = self.function_chain[3]
+                    else:
+                        func = self.function_chain[2]
             func(req, resp, cmd, config)
             if cmd.close_conn or cmd.resp_imm:
                 return resp, cmd
