@@ -6,7 +6,6 @@ from Entities.Command import Command
 from Entities.Configuration import Configuration
 import base64
 import json
-import uuid
 from datetime import datetime, timedelta
 
 # userPass = {
@@ -30,7 +29,8 @@ def authorize(req: Request, resp: Response, cmd: Command, config: Configuration)
         decode_data = base64.b64decode(code).decode("utf-8")
         username, password = decode_data.split(":")  # type: str, str
         if userPass.get(username) is not None and userPass[username] == password:
-            config.uuid = str(uuid.uuid3(uuid.NAMESPACE_OID, str(decode_data)))
+            config.user = username
+            config.password = password
             set_cookie(req, resp, cmd, config)
             cmd.skip_auth = False
             return
@@ -53,12 +53,12 @@ def check_cookies(req: Request, resp: Response, cmd: Command, config: Configurat
         return req, resp, cmd, config
     init_cookie_in_req(req)
     ses_id = req.headers["cookie"].get("session-id")
-    print(config.uuid, ses_id, file=sys.stderr)
     if ses_id is None:
         return req, resp, cmd, config
-    username, password = ses_id.split(":")
+    username, password = base64.b64decode(ses_id).decode().split(":")
     if userPass.get(username) is not None and userPass[username] == password:
-        config.uuid = str(uuid.uuid3(uuid.NAMESPACE_OID, str(ses_id)))
+        config.user = username
+        config.password = password
         cmd.skip_auth = True
     return req, resp, cmd, config
 
@@ -77,7 +77,8 @@ def set_cookie(req: Request, resp: Response, cmd: Command, config: Configuration
     hours_interval = 2
     gmt = gmt_str(hours_interval=hours_interval)
     # gmt = gmt_str(second_interval=60)
-    temp = "session-id=" + config.uuid + "; "
+    up = config.user + ':' + config.password
+    temp = "session-id=" + base64.b64encode(up.encode()).decode() + "; "
     temp += "Expires=" + gmt + "; "
     temp += "Path=/; "
     temp += "HttpOnly"

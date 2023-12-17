@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -32,6 +33,7 @@ class KeyManager:
                 label=None
             )
         )
+        print(self.sym_key_bytes, file=sys.stderr)
 
     def generate_keys(self) -> bytes:
         # Generate a private key for use in the exchange

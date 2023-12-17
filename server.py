@@ -22,11 +22,13 @@ class Server:
         self.host = host
         self.port = port
         self.socket = None
-        self.function_chain = [
+        self.basic_func_chain = [
             getPublicKey,
             setSymKey,
             persistent_connection_process,
-            authorize,
+            authorize
+        ]
+        self.optional_func_chain = [
             viewFile,
             uplAndDel
         ]
@@ -81,10 +83,10 @@ class Server:
             print(data.decode('utf-8'))
             resp, cmd = self.handle(data, config)
             if cmd.chunked:
-                conn.sendall(resp_encode(resp))
+                conn.sendall(resp_encode(resp, cmd, config))
                 send_chunk_file(resp, conn)
             else:
-                conn.sendall(resp_encode(resp))
+                conn.sendall(resp_encode(resp, cmd, config))
 
             # Check if the client requests to close the connection
             if cmd.close_conn:
@@ -103,15 +105,7 @@ class Server:
         print('req path', req.path)
         resp = Response()
         cmd = Command()
-        for i in range(3):
-            if i < 2:
-                func = self.function_chain[i]
-            else:
-                if req.path.startswith('/upload') or req.path.startswith('/delete'):
-                    func = self.function_chain[3]
-                else:
-                    print('diao yong le download')
-                    func = self.function_chain[2]
+        for func in self.basic_func_chain:
             func(req, resp, cmd, config)
             if cmd.close_conn or cmd.resp_imm:
                 return resp, cmd
@@ -119,7 +113,20 @@ class Server:
             if cmd.return_pub_key:
                 return resp.body, cmd  # 直接返回公钥
             if cmd.resp_imm:
-                return resp_encode(resp, config), cmd
+                return resp_encode(resp, cmd, config), cmd
+
+        if req.path.startswith('/upload') or req.path.startswith('/delete'):
+            func = self.optional_func_chain[1]
+        else:
+            print('diao yong le download')
+            func = self.optional_func_chain[0]
+        func(req, resp, cmd, config)
+        if cmd.close_conn or cmd.resp_imm:
+            return resp, cmd
+        if cmd.return_pub_key:
+            return resp.body, cmd  # 直接返回公钥
+        if cmd.resp_imm:
+            return resp_encode(resp, cmd, config), cmd
         # print(resp.parse_resp_to_str())
         return resp, cmd
 
@@ -134,16 +141,18 @@ def send_chunk_file(resp: Response, conn: socket):
             print('chunked len', chunk_len)
             conn.sendall(chunk_len + b'\r\n' + chunk + b'\r\n')
         conn.sendall(b'0\r\n\r\n')
-        return resp_encode(resp, config), cmd
 
 
-def resp_encode(resp: Response, config: Configuration) -> bytes:
+def resp_encode(resp: Response, cmd: Command, config: Configuration) -> bytes:
     resp_body = None
     if resp.file:
         resp_body = resp.file_content
     else:
         resp_body = resp.body.encode("utf-8")
-    if config.keysMan is not None:
+
+    if cmd.return_pub_key:
+        return resp.parse_resp_to_str().encode("utf-8") + resp_body
+    elif config.keysMan is not None:
         return resp.parse_resp_to_str().encode("utf-8") + config.keysMan.encrypt(resp_body)
     else:
         return resp.parse_resp_to_str().encode("utf-8") + resp_body

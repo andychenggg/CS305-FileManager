@@ -1,5 +1,7 @@
 import argparse
 import base64
+import sys
+
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
@@ -33,7 +35,7 @@ class EncryptedClient:
     def generate_symmetric_key(self):
         # Generate a random symmetric key for AES
         self.symmetric_key: bytes = os.urandom(32)
-        print("Symmetric key generated")
+        print("Symmetric key generated: ", self.symmetric_key)
 
     def encrypt_and_send_symmetric_key(self, public_key):
         # Encrypt the symmetric key with the server's public key
@@ -49,7 +51,44 @@ class EncryptedClient:
         request = f'POST / HTTP/1.1\r\ngive-symmetric-key: {encrypted_key}\r\n\r\n'
         # Send the encrypted symmetric key to the server
         self.socket.sendall(request.encode('utf-8'))
+        resp = self.socket.recv(4096).decode()
+        if resp.split('\r\n')[0].split(' ')[1] != '200':
+            print(resp, file=sys.stderr)
+            raise socket.error
         print("Encrypted symmetric key sent to server")
+
+    def encrypt(self, resp_encode_bytes: bytes) -> bytes:
+        # AES 需要一个合适长度的密钥，您可能需要根据 symmetric_key 来生成或截断以适应 AES 密钥长度
+        # AES 也需要一个初始化向量（IV）
+        iv = os.urandom(16)
+
+        # 创建 AES 加密器实例
+        cipher = Cipher(algorithms.AES(self.symmetric_key), modes.CFB(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+
+        # 加密数据
+        encrypted_data = encryptor.update(resp_encode_bytes) + encryptor.finalize()
+        encrypted_pack = iv + encrypted_data
+
+        # Base64 编码
+        encoded_encrypted_pack = base64.b64encode(encrypted_pack)
+
+        return encoded_encrypted_pack
+
+    def decrypt(self, req_b64_bytes: bytes) -> bytes:
+        # Base64 解码
+        encrypted_package = base64.b64decode(req_b64_bytes)
+        iv = encrypted_package[:16]
+        encrypted_data = encrypted_package[16:]
+
+        # 创建 AES 解密器实例
+        cipher = Cipher(algorithms.AES(self.symmetric_key), modes.CFB(iv), backend=default_backend())
+        decryptor = cipher.decryptor()
+
+        # 解密数据
+        decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
+
+        return decrypted_data
 
     def close_connection(self):
         self.socket.close()
@@ -77,6 +116,21 @@ if __name__ == "__main__":
 
     # Encrypt the symmetric key with the server's public key and send it to the server
     client.encrypt_and_send_symmetric_key(server_public_key)
+
+    http_req = ("GET /?sustech-http=1 HTTP/1.1\r\n"
+                "Accept: application/json\r\n"
+                "connection: keep-alive\r\n"
+                "Authorization: Basic dXNlcjE6cGFzczE=\r\n\r\n")
+
+    client.socket.sendall(http_req.encode())
+
+    resp = client.socket.recv(4096)
+    print(
+        client.decrypt(
+            resp.decode().split('\r\n\r\n')[-1].encode()
+        ).decode(),
+        file=sys.stderr
+    )
 
     # Close the connection
     client.close_connection()

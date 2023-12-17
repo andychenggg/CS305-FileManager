@@ -12,7 +12,7 @@ def getPublicKey(req: Request, resp: Response, cmd: Command, config: Configurati
         resp.statusMessage = resp.code_massage[resp.statusCode]
         config.keysMan = KeyManager()
         cmd.return_pub_key = True
-        resp.body = config.keysMan.generate_keys()
+        resp.body = config.keysMan.generate_keys().decode()
 
 
 def setSymKey(req: Request, resp: Response, cmd: Command, config: Configuration):
