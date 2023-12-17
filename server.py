@@ -1,12 +1,11 @@
 import socket
 import argparse
 import threading
-
+from WebSocket.web_server import WebSocketServer
 from Functions.PersistentConn import persistent_connection_process
 from Functions.Authentication.Authentication import authorize
 from Functions.Download.viewFile import viewFile
 from Functions.UplAndDel.UplAndDel import uplAndDel
-from html_package.HTMLManager import HTMLManager
 from Entities.Request import Request
 from Entities.Response import Response
 from Entities.Command import Command
@@ -18,16 +17,20 @@ class Server:
         self.host = host
         self.port = port
         self.socket = None
-        # self.html = HTMLManager()
         self.function_chain = [
             persistent_connection_process,
             authorize,
             viewFile,
             uplAndDel
         ]
+        self.web_server = None
 
     def start(self):
         try:
+            # Create a WebSocket server
+            self.web_server = WebSocketServer(self.host, self.port + 1)
+            web_socket_thread = threading.Thread(target=self.web_server.start)
+            web_socket_thread.start()
             # Create a socket (SOCK_STREAM means a TCP socket)
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -36,12 +39,12 @@ class Server:
 
             # Start listening for incoming connections
             self.socket.listen(100)
-            print(f'Server started on {self.host}:{self.port}')
+            print(f'HTTP Server started on {self.host}:{self.port}')
 
             # Keep the server running
             thread_index = 0
             while True:
-                print('Waiting for a connection...')
+                print('HTTP Waiting for a connection...')
                 connection, client_address = self.socket.accept()
                 client_thread = threading.Thread(
                     target=self.conn_thread,
@@ -92,18 +95,19 @@ class Server:
         print('req path', req.path)
         resp = Response()
         cmd = Command()
-        for func in self.function_chain:
-            for i in range(3):
-                if i < 2:
-                    func = self.function_chain[i]
+        for i in range(3):
+            if i < 2:
+                func = self.function_chain[i]
+            else:
+                if req.path.startswith('/upload') or req.path.startswith('/delete'):
+                    func = self.function_chain[3]
                 else:
-                    if req.path.startswith('/upload') or req.path.startswith('/delete'):
-                        func = self.function_chain[3]
-                    else:
-                        func = self.function_chain[2]
+                    print('diao yong le download')
+                    func = self.function_chain[2]
             func(req, resp, cmd, config)
             if cmd.close_conn or cmd.resp_imm:
                 return resp, cmd
+
         # print(resp.parse_resp_to_str())
         return resp, cmd
 
@@ -135,4 +139,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     server = Server(args.host, args.port)
-    server.start()
+    server_thread = threading.Thread(target=server.start)
+    server_thread.start()
