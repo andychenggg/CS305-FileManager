@@ -1,0 +1,8 @@
+### session
+GET http://localhost:8080/?sustech-http=0
+Accept: application/json
+Authorization: Basic dXNlcjE6cGFzczE=
+
+### 用 session 访问
+GET http://localhost:8080/
+Cookie: session-id=2c17d1af-b9ab-3691-bebc-cf63ff6bb75c

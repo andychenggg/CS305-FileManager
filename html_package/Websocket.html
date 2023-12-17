@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Client</h1>
+    <div id="messages"></div>
+    <script>
+        var ws = new WebSocket("ws://localhost:8765");
+
+        ws.onopen = function(ev) {
+            console.log("Connected to WebSocket server.");
+        };
+
+        ws.onmessage = function(ev) {
+            console.log("Message from server:", ev.data);
+            document.getElementById("messages").innerText += ev.data + '\n';
+        };
+
+        ws.onclose = function(ev) {
+            console.log("Disconnected from WebSocket server.");
+        };
+
+        ws.onerror = function(ev) {
+            console.log("Error occurred:", ev);
+        };
+
+        // 添加 beforeunload 事件监听器来优雅地关闭 WebSocket 连接
+        window.addEventListener("beforeunload", function(event) {
+            ws.close();
+        });
+    </script>
+</body>
+</html>

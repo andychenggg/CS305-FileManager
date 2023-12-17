@@ -3,13 +3,14 @@ import socket
 import argparse
 import sys
 import threading
-
+from WebSocket.web_server import WebSocketServer
 from Functions.PersistentConn import persistent_connection_process
 from Functions.Authentication.Authentication import authorize
 from Functions.Download.viewFile import viewFile
 from Functions.Https.KeysManager import KeyManager
 from Functions.Https.HttpsManager import getPublicKey, setSymKey
 from html_package.HTMLManager import HTMLManager
+from Functions.UplAndDel.UplAndDel import uplAndDel
 from Entities.Request import Request
 from Entities.Response import Response
 from Entities.Command import Command
@@ -21,17 +22,22 @@ class Server:
         self.host = host
         self.port = port
         self.socket = None
-        # self.html = HTMLManager()
         self.function_chain = [
             getPublicKey,
             setSymKey,
             persistent_connection_process,
             authorize,
-            viewFile
+            viewFile,
+            uplAndDel
         ]
+        self.web_server = None
 
     def start(self):
         try:
+            # Create a WebSocket server
+            self.web_server = WebSocketServer(self.host, self.port + 1)
+            web_socket_thread = threading.Thread(target=self.web_server.start)
+            web_socket_thread.start()
             # Create a socket (SOCK_STREAM means a TCP socket)
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -40,12 +46,12 @@ class Server:
 
             # Start listening for incoming connections
             self.socket.listen(100)
-            print(f'Server started on {self.host}:{self.port}')
+            print(f'HTTP Server started on {self.host}:{self.port}')
 
             # Keep the server running
             thread_index = 0
             while True:
-                print('Waiting for a connection...')
+                print('HTTP Waiting for a connection...')
                 connection, client_address = self.socket.accept()
                 client_thread = threading.Thread(
                     target=self.conn_thread,
@@ -73,10 +79,13 @@ class Server:
 
             # print(f"data from thread {index}")
             print(data.decode('utf-8'))
-
             resp, cmd = self.handle(data, config)
-            print(resp[:3000])
-            conn.sendall(resp)
+            if cmd.chunked:
+                conn.sendall(resp_encode(resp))
+                send_chunk_file(resp, conn)
+            else:
+                conn.sendall(resp_encode(resp))
+
             # Check if the client requests to close the connection
             if cmd.close_conn:
                 break
@@ -88,19 +97,43 @@ class Server:
     #     conn.close()
     #     print(f'thread {index}: Connection closed.')
 
-    def handle(self, origin_str: bytes, config: Configuration) -> (bytes, Command):
+    def handle(self, origin_str: bytes, config: Configuration) -> (Response, Command):
         req = Request(origin_str.decode('utf-8'))
         print(req.headers)
         print('req path', req.path)
         resp = Response()
         cmd = Command()
-        for func in self.function_chain:
+        for i in range(3):
+            if i < 2:
+                func = self.function_chain[i]
+            else:
+                if req.path.startswith('/upload') or req.path.startswith('/delete'):
+                    func = self.function_chain[3]
+                else:
+                    print('diao yong le download')
+                    func = self.function_chain[2]
             func(req, resp, cmd, config)
+            if cmd.close_conn or cmd.resp_imm:
+                return resp, cmd
+
             if cmd.return_pub_key:
                 return resp.body, cmd  # 直接返回公钥
             if cmd.resp_imm:
                 return resp_encode(resp, config), cmd
         # print(resp.parse_resp_to_str())
+        return resp, cmd
+
+
+def send_chunk_file(resp: Response, conn: socket):
+    with open(resp.chunk_path, 'rb') as file:
+        while True:
+            chunk = file.read(1024)
+            if not chunk:
+                break
+            chunk_len = f"{len(chunk):x}".encode('utf-8')
+            print('chunked len', chunk_len)
+            conn.sendall(chunk_len + b'\r\n' + chunk + b'\r\n')
+        conn.sendall(b'0\r\n\r\n')
         return resp_encode(resp, config), cmd
 
 
@@ -124,4 +157,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     server = Server(args.host, args.port)
-    server.start()
+    server_thread = threading.Thread(target=server.start)
+    server_thread.start()
