@@ -149,6 +149,11 @@
 
         ws.onmessage = function (ev) {
             console.log("Message from server:", ev.data);
+
+            if (ev.data === "refresh") {
+                window.location.reload();
+                return;
+            }
             if (ev.data.length === 0) {
                 announcements = [];
                 currentAnnouncementIndex = 0;
