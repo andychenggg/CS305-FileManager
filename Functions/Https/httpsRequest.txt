@@ -1,0 +1,5 @@
+GET / HTTP/1.1
+request-public-key: 1
+
+POST / HTTP/1.1
+give-symmetric-key: {base64编码的字符串}

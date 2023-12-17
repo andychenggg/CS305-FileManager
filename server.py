@@ -1,10 +1,15 @@
+import base64
 import socket
 import argparse
+import sys
 import threading
 from WebSocket.web_server import WebSocketServer
 from Functions.PersistentConn import persistent_connection_process
 from Functions.Authentication.Authentication import authorize
 from Functions.Download.viewFile import viewFile
+from Functions.Https.KeysManager import KeyManager
+from Functions.Https.HttpsManager import getPublicKey, setSymKey
+from html_package.HTMLManager import HTMLManager
 from Functions.UplAndDel.UplAndDel import uplAndDel
 from Entities.Request import Request
 from Entities.Response import Response
@@ -17,9 +22,13 @@ class Server:
         self.host = host
         self.port = port
         self.socket = None
-        self.function_chain = [
+        self.basic_func_chain = [
+            getPublicKey,
+            setSymKey,
             persistent_connection_process,
-            authorize,
+            authorize
+        ]
+        self.optional_func_chain = [
             viewFile,
             uplAndDel
         ]
@@ -74,14 +83,17 @@ class Server:
             print(data.decode('utf-8'))
             resp, cmd = self.handle(data, config)
             if cmd.chunked:
-                conn.sendall(resp_encode(resp))
+                conn.sendall(resp_encode(resp, cmd, config))
                 send_chunk_file(resp, conn)
             else:
-                conn.sendall(resp_encode(resp))
+
+                conn.sendall(resp_encode(resp, cmd, config))
+
             # Check if the client requests to refresh the page
             if cmd.refresh:
                 self.web_server.broadcast_refresh()
                 break
+
             # Check if the client requests to close the connection
             if cmd.close_conn:
                 break
@@ -95,22 +107,32 @@ class Server:
 
     def handle(self, origin_str: bytes, config: Configuration) -> (Response, Command):
         req = Request(origin_str.decode('utf-8'))
+        print(req.headers)
         print('req path', req.path)
         resp = Response()
         cmd = Command()
-        for i in range(3):
-            if i < 2:
-                func = self.function_chain[i]
-            else:
-                if req.path.startswith('/upload') or req.path.startswith('/delete'):
-                    func = self.function_chain[3]
-                else:
-                    print('diao yong le download')
-                    func = self.function_chain[2]
+        for func in self.basic_func_chain:
             func(req, resp, cmd, config)
             if cmd.close_conn or cmd.resp_imm:
                 return resp, cmd
 
+            if cmd.return_pub_key:
+                return resp.body, cmd  # 直接返回公钥
+            if cmd.resp_imm:
+                return resp_encode(resp, cmd, config), cmd
+
+        if req.path.startswith('/upload') or req.path.startswith('/delete'):
+            func = self.optional_func_chain[1]
+        else:
+            print('diao yong le download')
+            func = self.optional_func_chain[0]
+        func(req, resp, cmd, config)
+        if cmd.close_conn or cmd.resp_imm:
+            return resp, cmd
+        if cmd.return_pub_key:
+            return resp.body, cmd  # 直接返回公钥
+        if cmd.resp_imm:
+            return resp_encode(resp, cmd, config), cmd
         # print(resp.parse_resp_to_str())
         return resp, cmd
 
@@ -127,11 +149,19 @@ def send_chunk_file(resp: Response, conn: socket):
         conn.sendall(b'0\r\n\r\n')
 
 
-def resp_encode(resp: Response) -> bytes:
+def resp_encode(resp: Response, cmd: Command, config: Configuration) -> bytes:
+    resp_body = None
     if resp.file:
-        return resp.parse_resp_to_str().encode("utf-8") + resp.file_content
+        resp_body = resp.file_content
     else:
-        return resp.parse_resp_to_str().encode("utf-8") + resp.body.encode("utf-8")
+        resp_body = resp.body.encode("utf-8")
+
+    if cmd.return_pub_key:
+        return resp.parse_resp_to_str().encode("utf-8") + resp_body
+    elif config.keysMan is not None:
+        return resp.parse_resp_to_str().encode("utf-8") + config.keysMan.encrypt(resp_body)
+    else:
+        return resp.parse_resp_to_str().encode("utf-8") + resp_body
 
 
 if __name__ == '__main__':
