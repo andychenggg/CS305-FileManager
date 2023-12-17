@@ -4,17 +4,13 @@ import mimetypes
 
 
 def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
-    if req.method.upper() != 'GET':
-        resp.body = '405 Method Not Allowed'
-        responseCode(resp, cmd, "405")
-        print('405 Method Not Allowed')
-        return
+
     req.arg_path_para()
     path = req.file_path
 
     req.arg_path_para()
     print('path:', req.path, '\npara', req.paras_dict)
-    print('file_path:', req.file_path)
+    # print('file_path:', req.file_path)
     if path.endswith('/'):
         project_directory = f'./data{path}'
         # check if the directory exists
@@ -63,8 +59,15 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
                 resp.htmlM.current_path = ''
             resp.body = resp.htmlM.generate_html()
         else:
-            resp.body = '[' + ', '.join(folders + files) + ']'
+            # resp.body = '[' + ', '.join(folders + files) + ']'
+            resp.body = '[' + ', '.join(f'"{item}"' for item in (folders + files)) + ']'
+            # resp.body = folders + files
     else:
+        if req.method.upper() != 'GET':
+            resp.body = '405 Method Not Allowed'
+            responseCode(resp, cmd, "405")
+            print('405 Method Not Allowed')
+            return
         # check parameters is valid
         chunked_num = req.paras_dict.get('chunked', '0')
         if len(req.paras_dict) > 1 or chunked_num not in {'0', '1'} or len(

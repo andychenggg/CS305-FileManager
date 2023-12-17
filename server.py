@@ -26,6 +26,7 @@ class Server:
             uplAndDel
         ]
 
+
     def start(self):
         try:
             # Create a socket (SOCK_STREAM means a TCP socket)
@@ -92,18 +93,19 @@ class Server:
         print('req path', req.path)
         resp = Response()
         cmd = Command()
-        for func in self.function_chain:
-            for i in range(3):
-                if i < 2:
-                    func = self.function_chain[i]
+        for i in range(3):
+            if i < 2:
+                func = self.function_chain[i]
+            else:
+                if req.path.startswith('/upload') or req.path.startswith('/delete'):
+                    func = self.function_chain[3]
                 else:
-                    if req.path.startswith('/upload') or req.path.startswith('/delete'):
-                        func = self.function_chain[3]
-                    else:
-                        func = self.function_chain[2]
+                    print('diao yong le download')
+                    func = self.function_chain[2]
             func(req, resp, cmd, config)
             if cmd.close_conn or cmd.resp_imm:
                 return resp, cmd
+
         # print(resp.parse_resp_to_str())
         return resp, cmd
 
@@ -131,8 +133,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TCP Server for handling connections.')
     parser.add_argument('-i', '--host', default='localhost', help='Host address')
     parser.add_argument('-p', '--port', type=int, default=8080, help='Port number')
+    parser.add_argument('-w', '--web_port', type=int, default=8081, help='Web socket port number', required=False)
 
     args = parser.parse_args()
 
     server = Server(args.host, args.port)
-    server.start()
+    server_thread = threading.Thread(target=server.start)
+    server_thread.start()
+    print('123123132')
