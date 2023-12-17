@@ -1,9 +1,12 @@
+import sys
+
 from Entities.Request import Request
 from Entities.Response import Response
 from Entities.Command import Command
 from Entities.Configuration import Configuration
 import base64
 import json
+import uuid
 from datetime import datetime, timedelta
 
 # userPass = {
@@ -27,6 +30,7 @@ def authorize(req: Request, resp: Response, cmd: Command, config: Configuration)
         decode_data = base64.b64decode(code).decode("utf-8")
         username, password = decode_data.split(":")  # type: str, str
         if userPass.get(username) is not None and userPass[username] == password:
+            config.uuid = str(uuid.uuid3(uuid.NAMESPACE_OID, str(decode_data)))
             set_cookie(req, resp, cmd, config)
             cmd.skip_auth = False
             return
@@ -49,9 +53,12 @@ def check_cookies(req: Request, resp: Response, cmd: Command, config: Configurat
         return req, resp, cmd, config
     init_cookie_in_req(req)
     ses_id = req.headers["cookie"].get("session-id")
+    print(config.uuid, ses_id, file=sys.stderr)
     if ses_id is None:
         return req, resp, cmd, config
-    if ses_id == config.uuid:
+    username, password = ses_id.split(":")
+    if userPass.get(username) is not None and userPass[username] == password:
+        config.uuid = str(uuid.uuid3(uuid.NAMESPACE_OID, str(ses_id)))
         cmd.skip_auth = True
     return req, resp, cmd, config
 

@@ -4,7 +4,6 @@ import uuid
 from Functions.Https.KeysManager import KeyManager
 
 
-
 class Configuration:
     # 每一个连接独享的配置
     def __init__(self, thread_index: int):

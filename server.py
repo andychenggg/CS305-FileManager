@@ -90,6 +90,7 @@ class Server:
 
     def handle(self, origin_str: bytes, config: Configuration) -> (bytes, Command):
         req = Request(origin_str.decode('utf-8'))
+        print(req.headers)
         print('req path', req.path)
         resp = Response()
         cmd = Command()
