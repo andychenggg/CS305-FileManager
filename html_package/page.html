@@ -63,6 +63,28 @@
             color: #586069;
         }
 
+        .announcements {
+            position: relative;
+            background-color: #fffae6;
+            border: 1px solid #ffe58f;
+            border-radius: 4px;
+            padding: 8px 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .announcement-counter {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: #0366d6;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+
         .icon {
             width: 16px;
             height: 16px;
@@ -85,25 +107,29 @@
 
 <div class="container">
     <div class="header">
-<!-- Header will go here -->
+        <!-- Header will go here -->
+    </div>
+    <div id="announcements" class="announcements">
+        <p id="currentAnnouncement"></p>
+        <div id="announcementCounter" class="announcement-counter"></div>
     </div>
     <ul>
         <!-- Repeat this list item for each file or directory -->
-<!--        <li><a href="#">-->
-<!--            <svg class="icon" aria-hidden="true">-->
-<!--                <use xlink:href="#icon-folder"/>-->
-<!--            </svg>-->
-<!--            <span>../</span></a></li>-->
-<!--        <li><a href="#">-->
-<!--            <svg class="icon" aria-hidden="true">-->
-<!--                <use xlink:href="#icon-file"/>-->
-<!--            </svg>-->
-<!--            <span>123.png</span></a></li>-->
-<!--        <li><a href="#">-->
-<!--            <svg class="icon" aria-hidden="true">-->
-<!--                <use xlink:href="#icon-file"/>-->
-<!--            </svg>-->
-<!--            <span>abc.py</span></a></li>-->
+        <!--        <li><a href="#">-->
+        <!--            <svg class="icon" aria-hidden="true">-->
+        <!--                <use xlink:href="#icon-folder"/>-->
+        <!--            </svg>-->
+        <!--            <span>../</span></a></li>-->
+        <!--        <li><a href="#">-->
+        <!--            <svg class="icon" aria-hidden="true">-->
+        <!--                <use xlink:href="#icon-file"/>-->
+        <!--            </svg>-->
+        <!--            <span>123.png</span></a></li>-->
+        <!--        <li><a href="#">-->
+        <!--            <svg class="icon" aria-hidden="true">-->
+        <!--                <use xlink:href="#icon-file"/>-->
+        <!--            </svg>-->
+        <!--            <span>abc.py</span></a></li>-->
         <!-- Add other files -->
 
         <!-- Directories will go here -->
@@ -112,6 +138,57 @@
     <div class="footer">
         My Custom Directory Listing Styled Like GitHub
     </div>
+    <script>
+        const ws = new WebSocket("ws://localhost:8081");
+        let announcements = ['Welcome to the CS305 file server!'];
+        let currentAnnouncementIndex = 0;
+
+        ws.onopen = function (ev) {
+            console.log("Connected to WebSocket server.");
+        };
+
+        ws.onmessage = function (ev) {
+            console.log("Message from server:", ev.data);
+            if (ev.data.length === 0) {
+                announcements = [];
+                currentAnnouncementIndex = 0;
+            } else {
+                announcements = JSON.parse(ev.data);
+                currentAnnouncementIndex = 0;
+            }
+            displayAnnouncement();
+        };
+
+
+        ws.onclose = function (ev) {
+            console.log("Disconnected from WebSocket server.");
+        };
+
+        ws.onerror = function (ev) {
+            console.log("Error occurred:", ev);
+        };
+
+        function displayAnnouncement() {
+            const announcementElement = document.getElementById("currentAnnouncement");
+            const counterElement = document.getElementById("announcementCounter");
+
+            if (announcements.length > 0) {
+                announcementElement.innerText = announcements[currentAnnouncementIndex];
+                counterElement.innerText = (currentAnnouncementIndex + 1) + "/" + announcements.length;
+                currentAnnouncementIndex = (currentAnnouncementIndex + 1) % announcements.length;
+            } else {
+                announcementElement.innerText = "No announcements.";
+                counterElement.innerText = "0";
+            }
+        }
+
+
+        displayAnnouncement();
+        setInterval(displayAnnouncement, 5000);
+        window.addEventListener("beforeunload", function (event) {
+            ws.close();
+        });
+    </script>
 </div>
 </body>
 </html>

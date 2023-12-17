@@ -1,12 +1,11 @@
 import socket
 import argparse
 import threading
-
+from WebSocket.web_server import WebSocketServer
 from Functions.PersistentConn import persistent_connection_process
 from Functions.Authentication.Authentication import authorize
 from Functions.Download.viewFile import viewFile
 from Functions.UplAndDel.UplAndDel import uplAndDel
-from html_package.HTMLManager import HTMLManager
 from Entities.Request import Request
 from Entities.Response import Response
 from Entities.Command import Command
@@ -18,17 +17,20 @@ class Server:
         self.host = host
         self.port = port
         self.socket = None
-        # self.html = HTMLManager()
         self.function_chain = [
             persistent_connection_process,
             authorize,
             viewFile,
             uplAndDel
         ]
-
+        self.web_server = None
 
     def start(self):
         try:
+            # Create a WebSocket server
+            self.web_server = WebSocketServer(self.host, self.port + 1)
+            web_socket_thread = threading.Thread(target=self.web_server.start)
+            web_socket_thread.start()
             # Create a socket (SOCK_STREAM means a TCP socket)
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -37,12 +39,12 @@ class Server:
 
             # Start listening for incoming connections
             self.socket.listen(100)
-            print(f'Server started on {self.host}:{self.port}')
+            print(f'HTTP Server started on {self.host}:{self.port}')
 
             # Keep the server running
             thread_index = 0
             while True:
-                print('Waiting for a connection...')
+                print('HTTP Waiting for a connection...')
                 connection, client_address = self.socket.accept()
                 client_thread = threading.Thread(
                     target=self.conn_thread,
@@ -133,11 +135,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TCP Server for handling connections.')
     parser.add_argument('-i', '--host', default='localhost', help='Host address')
     parser.add_argument('-p', '--port', type=int, default=8080, help='Port number')
-    parser.add_argument('-w', '--web_port', type=int, default=8081, help='Web socket port number', required=False)
 
     args = parser.parse_args()
 
     server = Server(args.host, args.port)
     server_thread = threading.Thread(target=server.start)
     server_thread.start()
-    print('123123132')
