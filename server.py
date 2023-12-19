@@ -6,6 +6,7 @@ import threading
 from WebSocket.web_server import WebSocketServer
 from Functions.PersistentConn import persistent_connection_process
 from Functions.Authentication.Authentication import authorize
+from Functions.Authentication.Login import login
 from Functions.Download.viewFile import viewFile
 from Functions.Https.KeysManager import KeyManager
 from Functions.Https.HttpsManager import getPublicKey, setSymKey
@@ -23,6 +24,7 @@ class Server:
         self.port = port
         self.socket = None
         self.basic_func_chain = [
+            login,
             getPublicKey,
             setSymKey,
             persistent_connection_process,
@@ -107,13 +109,15 @@ class Server:
         cmd = Command()
         for func in self.basic_func_chain:
             func(req, resp, cmd, config)
-            if cmd.close_conn or cmd.resp_imm:
-                return resp, cmd
+            # if cmd.close_conn or cmd.resp_imm:
+            #     return resp, cmd
 
+            if cmd.close_conn:
+                return resp, cmd
             if cmd.return_pub_key:
                 return resp.body, cmd  # 直接返回公钥
             if cmd.resp_imm:
-                return resp_encode(resp, cmd, config), cmd
+                return resp, cmd
 
         if req.path.startswith('/upload') or req.path.startswith('/delete'):
             func = self.optional_func_chain[1]
@@ -126,7 +130,7 @@ class Server:
         if cmd.return_pub_key:
             return resp.body, cmd  # 直接返回公钥
         if cmd.resp_imm:
-            return resp_encode(resp, cmd, config), cmd
+            return resp, cmd
         # print(resp.parse_resp_to_str())
         return resp, cmd
 

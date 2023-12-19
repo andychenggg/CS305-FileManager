@@ -1,6 +1,6 @@
 class HTMLManager:
-    def __init__(self):
-        with open("html_package/page.html", "r") as file:
+    def __init__(self, html_dir: str = "html_package/page.html"):
+        with open(html_dir, "r") as file:
             self.html_template = file.read()
         self.directories = []
         self.files = []
