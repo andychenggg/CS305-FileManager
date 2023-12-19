@@ -2,6 +2,39 @@
 <html>
 <head>
     <title>Login Page</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let form = document.querySelector('form');
+            const socket = new WebSocket('ws://localhost:8081');
+
+            form.onsubmit = function (e) {
+                e.preventDefault();
+                let username = document.getElementById('username').value;
+                let password = document.getElementById('password').value;
+
+                // 发送数据
+                socket.send("LOGIN "+JSON.stringify({
+                    username: username,
+                    password: password
+                }));
+            };
+
+            // 接收数据
+            socket.onmessage = function (event) {
+                let response = JSON.parse(event.data);
+
+                // 根据返回信息处理
+                if (response.status === 200) {
+                    window.location.href = 'http://localhost:8080';
+                    document.cookie = response.cookie
+                } else if (response.status === 401) {
+                    document.getElementById('username').value = ""
+                    document.getElementById('password').value = ""
+                    alert('error：invalid username or password！');
+                }
+            };
+        });
+    </script>
 </head>
 <body>
     <h2>Login</h2>

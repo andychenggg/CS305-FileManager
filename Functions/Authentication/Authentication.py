@@ -75,14 +75,18 @@ def init_cookie_in_req(req: Request):
 
 def set_cookie(req: Request, resp: Response, cmd: Command, config: Configuration):
     hours_interval = 2
+    up = config.user + ':' + config.password
+    resp.headers["set-cookie"] = get_cookie_str(hours_interval=hours_interval, up=up)
+
+
+def get_cookie_str(hours_interval: int, up: str):
     gmt = gmt_str(hours_interval=hours_interval)
     # gmt = gmt_str(second_interval=60)
-    up = config.user + ':' + config.password
     temp = "session-id=" + base64.b64encode(up.encode()).decode() + "; "
     temp += "Expires=" + gmt + "; "
     temp += "Path=/; "
     temp += "HttpOnly"
-    resp.headers["set-cookie"] = temp
+    return temp
 
 
 def gmt_str(hours_interval: int = 0, minute_interval: int = 0, second_interval: int = 0):

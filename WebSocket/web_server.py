@@ -4,6 +4,8 @@ import base64
 import hashlib
 import struct
 import threading
+from Functions.Authentication.Authentication import get_cookie_str
+from Functions.Authentication.Login import submit_login
 
 
 class WebSocketServer:
@@ -150,11 +152,15 @@ class WebSocketServer:
                 if not frame:
                     break
 
-                message = self.decode_frame(frame)
+                message: str = self.decode_frame(frame)
                 print("Received message:", message)
 
-                response_frame = self.encode_websocket_frame(f"Echo: {message}")
-                client_socket.sendall(response_frame)
+                # if submit login
+                if message.startswith('LOGIN '):
+                    json_str: str = message[6:]
+                    resp: str = submit_login(json_str)
+                    response_frame = self.encode_websocket_frame(resp)
+                    client_socket.sendall(response_frame)
         except ConnectionAbortedError:
             print("Connection aborted by the client.")
         finally:
