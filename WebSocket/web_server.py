@@ -88,11 +88,16 @@ class WebSocketServer:
                     self.announcement_list.append(announcement)
                     self.broadcast_announcement_list()
                     print(f"Announcement added: {announcement}")
+                elif cmd == 'refresh':
+                    self.broadcast_refresh()
+                    print("Refresh message sent to all clients.")
                 elif cmd == 'help':
                     print("Available commands:")
                     print("  send <message>  - Add a new announcement.")
                     print("  delete <index>  - Delete an announcement by its index. Use 'all' to delete all.")
                     print("  list            - List all announcements.")
+                    print("  refresh         - Refresh all clients.")
+                    print("  exit            - Stop the server.")
                     print("  help            - Show this help message.")
                 elif cmd == 'delete' and len(parts) == 2:
                     index = parts[1]
@@ -128,6 +133,15 @@ class WebSocketServer:
                 client.sendall(response_frame)
             except Exception as e:
                 print(f"Error sending message to client: {e}")
+
+    def broadcast_refresh(self):
+        message = 'refresh'
+        for client in self.client_sockets:
+            try:
+                response_frame = self.encode_websocket_frame(message)
+                client.sendall(response_frame)
+            except Exception as e:
+                print(f"Error sending refresh message to client: {e}")
 
     def handle_client(self, client_socket):
         try:

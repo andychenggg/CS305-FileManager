@@ -88,7 +88,13 @@ class Server:
                 conn.sendall(resp_encode(resp, cmd, config))
                 send_chunk_file(resp, conn)
             else:
+
                 conn.sendall(resp_encode(resp, cmd, config))
+
+            # Check if the client requests to refresh the page
+            if cmd.refresh:
+                self.web_server.broadcast_refresh()
+                break
 
             # Check if the client requests to close the connection
             if cmd.close_conn:

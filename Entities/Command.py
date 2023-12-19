@@ -6,3 +6,4 @@ class Command:
         self.return_pub_key = False  # 返回公钥
 
         self.chunked = False  # 分块传输
+        self.refresh = False # 刷新页面
