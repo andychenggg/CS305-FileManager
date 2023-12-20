@@ -22,11 +22,13 @@
             // 接收数据
             socket.onmessage = function (event) {
                 let response = JSON.parse(event.data);
-
+                console.log('cookies0',response)
+                console.log('cookies0',1)
                 // 根据返回信息处理
                 if (response.status === 200) {
-                    window.location.href = 'http://localhost:8080';
+                    console.log('cookies',response)
                     document.cookie = response.cookie
+                    window.location.href = 'http://localhost:8080';
                 } else if (response.status === 401) {
                     document.getElementById('username').value = ""
                     document.getElementById('password').value = ""
