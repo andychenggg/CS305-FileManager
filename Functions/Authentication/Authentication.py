@@ -85,7 +85,7 @@ def get_cookie_str(hours_interval: int, up: str):
     temp = "session-id=" + base64.b64encode(up.encode()).decode() + "; "
     temp += "Expires=" + gmt + "; "
     temp += "Path=/; "
-    temp += "HttpOnly"
+    # temp += "HttpOnly"
     return temp
 
 

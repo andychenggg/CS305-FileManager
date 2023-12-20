@@ -152,9 +152,8 @@ class WebSocketServer:
                 if not frame:
                     break
 
-                message: str = self.decode_frame(frame)
+                message = self.decode_frame(frame)
                 print("Received message:", message)
-
                 # if submit login
                 if message.startswith('LOGIN '):
                     json_str: str = message[6:]
@@ -176,7 +175,7 @@ class WebSocketServer:
             return decoded.decode('utf-8')
         except UnicodeDecodeError:
             print("Received data cannot be decoded as UTF-8. It might be binary data.")
-            return decoded
+            return 'error'
 
     @staticmethod
     def recv_frame(client_socket):
