@@ -1,0 +1,10 @@
+# delete a file
+POST http://localhost:8080/delete?path=user1/a.txt
+Accept: application/json
+Authorization: Basic dXNlcjE6cGFzczE=
+
+### path is not provided
+# delete a file
+POST http://localhost:8080/delete?path=user1/a.txt
+Accept: application/json
+#Authorization: Basic dXNlcjE6cGFzczE=
