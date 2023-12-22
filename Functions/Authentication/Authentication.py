@@ -25,15 +25,19 @@ def authorize(req: Request, resp: Response, cmd: Command, config: Configuration)
     value: str = req.headers.get("authorization")
     if value is not None:
         code: str
-        _, code = value.split(" ")
-        decode_data = base64.b64decode(code).decode("utf-8")
-        username, password = decode_data.split(":")  # type: str, str
-        if userPass.get(username) is not None and userPass[username] == password:
-            config.user = username
-            config.password = password
-            set_cookie(req, resp, cmd, config)
-            cmd.skip_auth = False
-            return
+        try:
+            _, code = value.split(" ")
+            if len(code) % 4 == 0:
+                decode_data = base64.b64decode(code).decode("utf-8")
+                username, password = decode_data.split(":")  # type: str, str
+                if userPass.get(username) is not None and userPass[username] == password:
+                    config.user = username
+                    config.password = password
+                    set_cookie(req, resp, cmd, config)
+                    cmd.skip_auth = False
+                    return
+        except Exception as e:
+            pass
     if config.is_first_time:
         config.is_first_time = False
         cmd.resp_imm = True
@@ -53,14 +57,18 @@ def check_cookies(req: Request, resp: Response, cmd: Command, config: Configurat
         return req, resp, cmd, config
     init_cookie_in_req(req)
     ses_id = req.headers["cookie"].get("session-id")
-    if ses_id is None:
+    if ses_id is None or len(ses_id) % 4 != 0:
         return req, resp, cmd, config
-    username, password = base64.b64decode(ses_id).decode().split(":")
-    if userPass.get(username) is not None and userPass[username] == password:
-        config.user = username
-        config.password = password
-        cmd.skip_auth = True
-    return req, resp, cmd, config
+    try:
+        username, password = base64.b64decode(ses_id).decode().split(":")
+    except Exception as e:
+        return req, resp, cmd, config
+    else:
+        if userPass.get(username) is not None and userPass[username] == password:
+            config.user = username
+            config.password = password
+            cmd.skip_auth = True
+        return req, resp, cmd, config
 
 
 def init_cookie_in_req(req: Request):

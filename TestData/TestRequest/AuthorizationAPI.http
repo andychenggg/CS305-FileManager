@@ -1,7 +1,7 @@
 ### session
 GET http://localhost:8080/?sustech-http=0
 Accept: application/json
-Authorization: Basic dXNlcjE6cGFzczE=
+#Authorization: Basic dXNlcjE6cGFzczE=
 
 ### 用 session 访问
 GET http://localhost:8080/
