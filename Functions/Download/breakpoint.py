@@ -11,15 +11,21 @@ def breakpointtransmission(req, file_path, resp: Response, cmd: Command):
         file_size = os.path.getsize(file_path)
     for range in ranges:
         if not validate_range(range, file_size):
-            resp.body = f'416 Range Not Satisfiable'
-            responseCode(resp, cmd, "416")
-            print('Range Not Satisfiable', range)
-            return
+            return False
     content = ''
     for range in ranges:
         content = content + '--'+boundary+'\n'+'Content-type= text/plain\n'
-        start, end = map(int, range.split('-'))
-        content = content + f'Content-range= {start}-{end}/{file_size}\n\n'
+        start, end = map(str, range.split('-'))
+        if start == '':
+            start = file_size - int(end)
+            end = file_size-1
+        elif end == '':
+            start = int(start)
+            end = file_size-1
+        else:
+            start = int(start)
+            end = int(end)
+        content = content + f'Content-range= {start+1}-{end+1}/{file_size}\n\n'
         response_size = end - start + 1
         with open(file_path, 'rb') as file1:
             # 将文件指针移动到起始位置
@@ -30,19 +36,27 @@ def breakpointtransmission(req, file_path, resp: Response, cmd: Command):
     content = content + '--' + boundary + '--'
     resp.file_content = content.encode()
     resp.set_content_length(len(content))
+    resp.body = f'206 Partial Content'
+    responseCode(resp, cmd, "206")
+    return True
 
 def validate_range(range, file_size):
     # 验证范围是否有效
     if '-' not in range:
         return False
     else:
-        start, end = map(int, range.split('-'))
-        if start == '' and end == '':
-            return False
-        elif (start == '' and end >= file_size) or (end == '' and start >= file_size):
-            return False
-        elif start > end or start >= file_size or end >= file_size:
-            return False
+        start, end = map(str, range.split('-'))
+        if start == '':
+            if end == '':
+                return False;
+            elif int(end) >= file_size:
+                return False;
+        else:
+            if end == '':
+                if int(start) >= file_size:
+                    return False
+            elif int(start) > int(end) or int(start) >= file_size or int(end) >= int(file_size):
+                return False
     return True
 
 def responseCode(res: Response, cmd: Command, code: str):

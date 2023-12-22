@@ -22,8 +22,18 @@ def uplAndDel(req: Request, resp: Response, cmd: Command, config: Configuration)
     _, code = value.split(" ")
     decode_data = base64.b64decode(code).decode("utf-8")
     username, password = decode_data.split(":")  # type: str, str
+    if not 'path=' in req.path:
+        resp.body = '400 Bad Request'
+        response_code(resp, cmd, "400")
+        print('400 Bad Request')
+        return
     username_input = req.path.split("=")[1]
-    username_input = username_input.split("/")[0]
+    print('username_input:'+username_input)
+    if username_input.startswith('/'):
+        username_input = username_input.split("/")[1]
+    else:
+        username_input = username_input.split("/")[0]
+
     if username_input != username:
         resp.body = '403 Forbidden'
         response_code(resp, cmd, "403")
@@ -47,8 +57,10 @@ def uplAndDel(req: Request, resp: Response, cmd: Command, config: Configuration)
         filepath = filepath[:-1]
         print(filepath)
         if not os.path.exists(filepath):
-            os.makedirs(filepath)
-            print('yes')
+            resp.body = '404 Not Found'
+            response_code(resp, cmd, "404")
+            print('404 Not Found')
+            return
         # 保存文件
         with open(filepath + '/' + filename, 'w') as f:
             f.write(content)

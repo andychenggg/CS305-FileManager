@@ -98,7 +98,12 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
                 return
             if "range" in req.headers:
                 print('it has range')
-                breakpointtransmission(req, file_path, resp, cmd)
+                if not breakpointtransmission(req, file_path, resp, cmd):
+                    resp.file = False
+                    resp.body = '416 Range Not Satisfiable'
+                    responseCode(resp, cmd, "416")
+                    print('Range Not Satisfiable')
+                    return
             else:
                 print('it dose not have range')
                 resp.file_content = binary_content
@@ -106,8 +111,6 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
             mini_type = mimetypes.guess_type(file_path)[0]
             mini_type = mini_type if mini_type else 'application/octet-stream'
             resp.set_content_type(mini_type)
-
-
         else:
             cmd.chunked = True
             resp.set_content_type('application/octet-stream')
