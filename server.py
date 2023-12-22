@@ -121,7 +121,7 @@ class Server:
             if cmd.close_conn:
                 return resp, cmd
             if cmd.return_pub_key:
-                return resp.body, cmd  # 直接返回公钥
+                return resp, cmd  # 直接返回公钥
             if cmd.resp_imm:
                 return resp, cmd
 
@@ -155,13 +155,15 @@ def send_chunk_file(resp: Response, conn: socket):
 
 def resp_encode(resp: Response, cmd: Command, config: Configuration) -> bytes:
     resp_body = None
-    if resp.file:
+    if cmd.resp_imm:
+        resp_body = resp.body.encode()
+    elif resp.file:
         resp_body = resp.file_content
     else:
         resp_body = resp.body.encode("utf-8")
 
     if cmd.return_pub_key:
-        return resp.parse_resp_to_str().encode("utf-8") + resp_body
+        return resp_body
     elif config.keysMan is not None:
         return resp.parse_resp_to_str().encode("utf-8") + config.keysMan.encrypt(resp_body)
     else:
