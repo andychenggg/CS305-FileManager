@@ -2,6 +2,7 @@ from Entities import Request, Response, Command, Configuration
 import os
 import mimetypes
 
+from Functions.Download.breakpoint import breakpointtransmission
 
 def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
 
@@ -95,11 +96,18 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
                 responseCode(resp, cmd, "404")
                 print('there is no', file_path)
                 return
-            resp.file_content = binary_content
+            if "range" in req.headers:
+                print('it has range')
+                breakpointtransmission(req, file_path, resp, cmd)
+            else:
+                print('it dose not have range')
+                resp.file_content = binary_content
+                resp.set_content_length(len(binary_content))
             mini_type = mimetypes.guess_type(file_path)[0]
             mini_type = mini_type if mini_type else 'application/octet-stream'
             resp.set_content_type(mini_type)
-            resp.set_content_length(len(binary_content))
+
+
         else:
             cmd.chunked = True
             resp.set_content_type('application/octet-stream')
