@@ -23,21 +23,23 @@ class EncryptedClient:
 
     def connect_to_server(self):
         self.socket.connect((self.server_host, self.server_port))
-        print(f"Connected to server at {self.server_host}:{self.server_port}")
+        print(f"Connected to server at {self.server_host}:{self.server_port}\n")
 
-    def request_public_key(self):
+    def request_public_key(self, prt: bool = True):
         self.socket.sendall(b'GET / HTTP/1.1\r\nrequest-public-key: 1\r\n\r\n')
         public_key_pem = self.socket.recv(4096)
         public_key = load_pem_public_key(public_key_pem, backend=default_backend())
-        print("Received public key from server")
+        if prt:
+            print(f"Received public key from server: \n{public_key_pem}\n")
         return public_key
 
-    def generate_symmetric_key(self):
+    def generate_symmetric_key(self, prt: bool = True):
         # Generate a random symmetric key for AES
         self.symmetric_key: bytes = os.urandom(32)
-        print("Symmetric key generated: ", self.symmetric_key)
+        if prt:
+            print("Symmetric key generated: \n", self.symmetric_key, '\n')
 
-    def encrypt_and_send_symmetric_key(self, public_key):
+    def encrypt_and_send_symmetric_key(self, public_key, prt: bool = True):
         # Encrypt the symmetric key with the server's public key
         encrypted_key_bytes: bytes = public_key.encrypt(
             self.symmetric_key,
@@ -47,6 +49,8 @@ class EncryptedClient:
                 label=None
             )
         )
+        if prt:
+            print(f"Encrypted symmetric key: \n{encrypted_key_bytes}\n")
         encrypted_key: str = base64.b64encode(encrypted_key_bytes).decode('utf-8')
         request = f'POST / HTTP/1.1\r\ngive-symmetric-key: {encrypted_key}\r\n\r\n'
         # Send the encrypted symmetric key to the server
@@ -55,7 +59,7 @@ class EncryptedClient:
         if resp.split('\r\n')[0].split(' ')[1] != '200':
             print(resp, file=sys.stderr)
             raise socket.error
-        print("Encrypted symmetric key sent to server")
+        print("Encrypted symmetric key sent to server\n")
 
     def encrypt(self, resp_encode_bytes: bytes) -> bytes:
         # AES 需要一个合适长度的密钥，您可能需要根据 symmetric_key 来生成或截断以适应 AES 密钥长度
@@ -125,12 +129,9 @@ if __name__ == "__main__":
     client.socket.sendall(http_req.encode())
 
     resp = client.socket.recv(4096)
-    print(
-        client.decrypt(
-            resp.decode().split('\r\n\r\n')[-1].encode()
-        ).decode(),
-        file=sys.stderr
-    )
+    body = resp.decode().split('\r\n\r\n')[-1]
+    print(f"Original body: \n{body}\n")
+    print("Decrypted body: \n", client.decrypt(body.encode()).decode(), '\n')
 
     # Close the connection
     client.close_connection()
