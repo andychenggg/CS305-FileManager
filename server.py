@@ -4,18 +4,17 @@ import argparse
 import sys
 import threading
 from WebSocket.web_server import WebSocketServer
-from Functions.PersistentConn import persistent_connection_process
+from Functions.PersistentConn import persistent_connection_and_head_process
 from Functions.Authentication.Authentication import authorize
 from Functions.Authentication.Login import login
 from Functions.Download.viewFile import viewFile
-from Functions.Https.KeysManager import KeyManager
 from Functions.Https.HttpsManager import getPublicKey, setSymKey
-from html_package.HTMLManager import HTMLManager
 from Functions.UplAndDel.UplAndDel import uplAndDel
 from Entities.Request import Request
 from Entities.Response import Response
 from Entities.Command import Command
 from Entities.Configuration import Configuration
+from Functions.head.head import head
 
 
 class Server:
@@ -24,10 +23,11 @@ class Server:
         self.port = port
         self.socket = None
         self.basic_func_chain = [
+            head,
             login,
             getPublicKey,
             setSymKey,
-            persistent_connection_process,
+            persistent_connection_and_head_process,
             authorize
         ]
         self.optional_func_chain = [
@@ -72,40 +72,39 @@ class Server:
                 print('Server closed')
 
     def conn_thread(self, conn: socket, address: tuple, index: int):
-        # try:
-        print(f'Connection from {address}, thread {index}')
-        # Keep the connection open to handle multiple requests
-        config = Configuration(index)
-        while True:
-            data = conn.recv(4096)
-            if not data:
-                break
+        try:
+            print(f'Connection from {address}, thread {index}')
+            # Keep the connection open to handle multiple requests
+            config = Configuration(index)
+            while True:
+                data = conn.recv(4096)
+                if not data:
+                    break
 
-            # print(f"data from thread {index}")
-            print(data.decode('utf-8'))
-            resp, cmd = self.handle(data, config)
-            if cmd.chunked:
-                conn.sendall(resp_encode(resp, cmd, config))
-                send_chunk_file(resp, conn)
-            else:
+                # print(f"data from thread {index}")
+                print(data.decode('utf-8'))
+                resp, cmd = self.handle(data, config)
+                if cmd.chunked:
+                    conn.sendall(resp_encode(resp, cmd, config))
+                    send_chunk_file(resp, conn)
+                else:
+                    conn.sendall(resp_encode(resp, cmd, config))
 
-                conn.sendall(resp_encode(resp, cmd, config))
+                # Check if the client requests to refresh the page
+                if cmd.refresh:
+                    self.web_server.broadcast_refresh()
+                    break
 
-            # Check if the client requests to refresh the page
-            if cmd.refresh:
-                self.web_server.broadcast_refresh()
-                break
+                # Check if the client requests to close the connection
+                if cmd.close_conn:
+                    break
 
-            # Check if the client requests to close the connection
-            if cmd.close_conn:
-                break
-
-    # except Exception as e:
-    #     print(f'An error occurred in thread {index}: {e}')
-    # finally:
-    #     # Close the connection
-    #     conn.close()
-    #     print(f'thread {index}: Connection closed.')
+        except Exception as e:
+            print(f'An error occurred in thread {index}: {e}')
+        finally:
+            # Close the connection
+            conn.close()
+            print(f'thread {index}: Connection closed.')
 
     def handle(self, origin_str: bytes, config: Configuration) -> (Response, Command):
         req = Request(origin_str.decode('utf-8'))

@@ -52,7 +52,7 @@ class EncryptedClient:
         if prt:
             print(f"Encrypted symmetric key: \n{encrypted_key_bytes}\n")
         encrypted_key: str = base64.b64encode(encrypted_key_bytes).decode('utf-8')
-        request = f'POST / HTTP/1.1\r\ngive-symmetric-key: {encrypted_key}\r\n\r\n'
+        request = f'HEAD / HTTP/1.1\r\ngive-symmetric-key: {encrypted_key}\r\n\r\n'
         # Send the encrypted symmetric key to the server
         self.socket.sendall(request.encode('utf-8'))
         resp = self.socket.recv(4096).decode()
