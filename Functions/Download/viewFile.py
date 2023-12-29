@@ -10,7 +10,12 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
     path = req.file_path
 
     req.arg_path_para()
-    print('path:', req.path, '\npara', req.paras_dict,'\nfile_path:', req.file_path)
+    print('path:', req.path, '\npara', req.paras_dict, '\nfile_path:', req.file_path)
+    if req.method.upper() != 'GET':
+        resp.body = '405 Method Not Allowed'
+        responseCode(resp, cmd, "405")
+        print('405 Method Not Allowed')
+        return
     # print('file_path:', req.file_path)
     if path.endswith('/'):
         project_directory = f'./data{path}'
@@ -37,7 +42,6 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
                 if key != 'sustech-http':
                     flag = 0
                     break
-
 
         if not flag:
             resp.body = f'400 Bad Request'
@@ -69,11 +73,6 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
             resp.body = '[' + ', '.join(f'"{item}"' for item in (folders + files)) + ']'
             # resp.body = folders + files
     else:
-        if req.method.upper() != 'GET':
-            resp.body = '405 Method Not Allowed'
-            responseCode(resp, cmd, "405")
-            print('405 Method Not Allowed')
-            return
         # check parameters is valid
         chunked_num = req.paras_dict.get('chunked', '0')
         if len(req.paras_dict) > 1 or chunked_num not in {'0', '1'} or len(
