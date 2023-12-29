@@ -6,3 +6,8 @@ Accept: application/json
 ### 用 session 访问
 GET http://localhost:8080/
 Cookie: session-id=2c17d1af-b9ab-3691-bebc-cf63ff6bb75c
+
+###
+GET http://127.0.0.1:8080/client1/a.txt
+Authorization: Basic dXNlcjE6cGFzczE=
+Range: 6-2
