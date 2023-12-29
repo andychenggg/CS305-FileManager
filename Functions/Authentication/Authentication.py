@@ -16,7 +16,7 @@ with open("Functions/Authentication/userPass.json", "r") as f:
     userPass = dict(json.load(f))
 
 
-def authorize(req: Request, resp: Response, cmd: Command, config: Configuration):
+def authorize_and_handle_head(req: Request, resp: Response, cmd: Command, config: Configuration):
     req, resp, cmd, config = check_cookies(req, resp, cmd, config)
     if cmd.skip_auth:
         set_cookie(req, resp, cmd, config)
@@ -35,6 +35,8 @@ def authorize(req: Request, resp: Response, cmd: Command, config: Configuration)
                     config.password = password
                     set_cookie(req, resp, cmd, config)
                     cmd.skip_auth = False
+                    if req.method.lower() == 'head':
+                        cmd.resp_imm = True
                     return
         except Exception as e:
             pass
