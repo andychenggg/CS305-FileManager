@@ -4,13 +4,13 @@ import mimetypes
 
 from Functions.Download.breakpoint import breakpointtransmission
 
-def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
 
+def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
     req.arg_path_para()
     path = req.file_path
 
     req.arg_path_para()
-    print('path:', req.path, '\npara', req.paras_dict)
+    print('path:', req.path, '\npara', req.paras_dict,'\nfile_path:', req.file_path)
     # print('file_path:', req.file_path)
     if path.endswith('/'):
         project_directory = f'./data{path}'
@@ -33,9 +33,14 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
                 flag = 1
             elif para == '1':
                 flag = 2
+            for key in req.paras_dict.keys():
+                if key != 'sustech-http':
+                    flag = 0
+                    break
+
 
         if not flag:
-            resp.body = f'400 Bad Request in {para}'
+            resp.body = f'400 Bad Request'
             responseCode(resp, cmd, "400")
             print(resp.body)
             return
@@ -73,14 +78,14 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
         chunked_num = req.paras_dict.get('chunked', '0')
         if len(req.paras_dict) > 1 or chunked_num not in {'0', '1'} or len(
                 req.paras_dict) == 1 and req.paras_dict.keys() != {'chunked'}:
-            resp.body = f'400 Bad Request in {req.paras_dict}'
+            resp.body = f'400 Bad Request'
             responseCode(resp, cmd, "400")
             print(resp.body)
             return
         # check if the file exists
         file_path = f'./data{path}'
         if not os.path.isfile(file_path):
-            resp.body = f'404 Not Found {file_path}'
+            resp.body = f'404 Not Found'
             responseCode(resp, cmd, "404")
             print('there is no', file_path)
             return
