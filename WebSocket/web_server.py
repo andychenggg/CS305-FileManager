@@ -9,7 +9,7 @@ from Functions.Authentication.Login import submit_login
 
 
 class WebSocketServer:
-    def __init__(self, host='localhost', port=8081):
+    def __init__(self, host='0.0.0.0', port=8081):
         self.port = port
         self.local_host = host
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

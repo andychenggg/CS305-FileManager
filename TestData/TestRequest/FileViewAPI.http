@@ -35,9 +35,33 @@ Authorization: Basic dXNlcjE6cGFzczE=
 
 ###
 # get file
-GET http://localhost:8080/user1/a.txt
+GET http://localhost:8080/a.txt
 Authorization: Basic dXNlcjE6cGFzczE=
 ###
 # get chunked file
-GET http://localhost:8080/user1/a.txt?chunked=0
+GET http://localhost:8080/a.txt?chunked=1
+Authorization: Basic dXNlcjE6cGFzczE=
+
+### get big file 70
+GET http://localhost:8080/neatreader70.zip
+Authorization: Basic dXNlcjE6cGFzczE=
+### get big file 140
+GET http://localhost:8080/neatreader140.zip
+Authorization: Basic dXNlcjE6cGFzczE=
+### get big file 280
+GET http://localhost:8080/neatreader280.zip
+Authorization: Basic dXNlcjE6cGFzczE=
+
+### get big file in chunked
+GET http://localhost:8080/neatreader.zip?chunked=1
+Authorization: Basic dXNlcjE6cGFzczE=
+
+### get big file 70 in chunked
+GET http://localhost:8080/neatreader70.zip?chunked=1
+Authorization: Basic dXNlcjE6cGFzczE=
+### get big file 140 in chunked
+GET http://localhost:8080/neatreader140.zip?chunked=1
+Authorization: Basic dXNlcjE6cGFzczE=
+### get big file 280 in chunked
+GET http://localhost:8080/neatreader280.zip?chunked=1
 Authorization: Basic dXNlcjE6cGFzczE=
