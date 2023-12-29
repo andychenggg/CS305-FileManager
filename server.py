@@ -142,7 +142,7 @@ class Server:
 def send_chunk_file(resp: Response, conn: socket):
     with open(resp.chunk_path, 'rb') as file:
         while True:
-            chunk = file.read(1024)
+            chunk = file.read(16384)
             if not chunk:
                 break
             chunk_len = f"{len(chunk):x}".encode('utf-8')
@@ -170,7 +170,7 @@ def resp_encode(resp: Response, cmd: Command, config: Configuration) -> bytes:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TCP Server for handling connections.')
-    parser.add_argument('-i', '--host', default='localhost', help='Host address')
+    parser.add_argument('-i', '--host', default='0.0.0.0', help='Host address')
     parser.add_argument('-p', '--port', type=int, default=8080, help='Port number')
 
     args = parser.parse_args()
