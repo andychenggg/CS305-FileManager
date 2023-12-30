@@ -4,8 +4,8 @@ import argparse
 import sys
 import threading
 from WebSocket.web_server import WebSocketServer
-from Functions.PersistentConn import persistent_connection_and_head_process
-from Functions.Authentication.Authentication import authorize
+from Functions.PersistentConn import persistent_connection_and_process
+from Functions.Authentication.Authentication import authorize_and_handle_head
 from Functions.Authentication.Login import login
 from Functions.Download.viewFile import viewFile
 from Functions.Https.HttpsManager import getPublicKey, setSymKey
@@ -23,12 +23,11 @@ class Server:
         self.port = port
         self.socket = None
         self.basic_func_chain = [
-            head,
             login,
             getPublicKey,
             setSymKey,
-            persistent_connection_and_head_process,
-            authorize
+            persistent_connection_and_process,
+            authorize_and_handle_head
         ]
         self.optional_func_chain = [
             viewFile,
