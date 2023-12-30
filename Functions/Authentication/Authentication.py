@@ -1,5 +1,7 @@
 import sys
 
+from typing import Set
+
 from Entities.Request import Request
 from Entities.Response import Response
 from Entities.Command import Command
@@ -11,6 +13,7 @@ from datetime import datetime, timedelta
 # userPass = {
 #     "user1": "pass1"
 # }
+cookie_dict: dict = {}
 
 with open("Functions/Authentication/userPass.json", "r") as f:
     userPass = dict(json.load(f))
@@ -23,7 +26,7 @@ def authorize_and_handle_head(req: Request, resp: Response, cmd: Command, config
         cmd.skip_auth = False
         return
     value: str = req.headers.get("authorization")
-    if value is not None:
+    if value is not None and not cmd.resp_imm:
         code: str
         try:
             _, code = value.split(" ")
@@ -37,6 +40,7 @@ def authorize_and_handle_head(req: Request, resp: Response, cmd: Command, config
                     cmd.skip_auth = False
                     if req.method.lower() == 'head':
                         cmd.resp_imm = True
+                        resp.body = ''
                     return
         except Exception as e:
             pass
@@ -62,14 +66,23 @@ def check_cookies(req: Request, resp: Response, cmd: Command, config: Configurat
     if ses_id is None or len(ses_id) % 4 != 0:
         return req, resp, cmd, config
     try:
-        username, password, time_str = base64.b64decode(ses_id).decode().split(":")
+        username, password, time_str = base64.b64decode(ses_id).decode().split(":", maxsplit=2)
     except Exception as e:
+        print(e, file=sys.stderr)
+        cmd.resp_imm = True
         return req, resp, cmd, config
     else:
-        if userPass.get(username) is not None and userPass[username] == password and not expire(time_str):
+        if (userPass.get(username) is not None and
+                userPass[username] == password and
+                not expire(time_str) and
+                cookie_dict.get(username + ':' + password) is not None
+        ):
             config.user = username
             config.password = password
             cmd.skip_auth = True
+        else:
+            cmd.resp_imm = True
+
         return req, resp, cmd, config
 
 
@@ -86,7 +99,9 @@ def init_cookie_in_req(req: Request):
 def set_cookie(req: Request, resp: Response, cmd: Command, config: Configuration):
     hours_interval = 2
     up = config.user + ':' + config.password
-    resp.headers["set-cookie"] = get_cookie_str(hours_interval=hours_interval, up=up)
+    ck_str = get_cookie_str(hours_interval=hours_interval, up=up)
+    resp.headers["set-cookie"] = ck_str
+    cookie_dict[up] = ck_str
 
 
 def get_cookie_str(hours_interval: int, up: str):
@@ -118,4 +133,3 @@ def expire(time_str: str) -> bool:
     current_time = datetime.utcnow()
     print(current_time, gmt_time)
     return gmt_time < current_time
-
