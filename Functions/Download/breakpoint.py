@@ -46,7 +46,7 @@ def breakpointtransmission(req, file_path, resp: Response, cmd: Command):
                 file1.seek(start)
                 # 获取响应内容
                 content = content + file1.read(response_size)+'\n'.encode('UTF-8')
-                content = content + ('--' + boundary + '--').encode('UTF-8')
+        content = content + ('--' + boundary + '--').encode('UTF-8')
     else:
         range = ranges[0]
         start, end = map(str, range.split('-'))
