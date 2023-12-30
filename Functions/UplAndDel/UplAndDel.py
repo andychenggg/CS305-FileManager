@@ -53,7 +53,12 @@ def uplAndDel(req: Request, resp: Response, cmd: Command, config: Configuration)
         filename, content_disposition, content = parse_multipart_form_data(req.data, boundary)
 
         # 检查目录是否存在，如果不存在则创建
-        filepath = './data/' + req.paras_dict['path']
+        filepath = './data/'+username
+        if not os.path.exists(filepath):
+            os.makedirs(filepath)
+            print('create dir')
+
+        filepath = './data/' + req.paras_dict['path'] + '/'
         filepath = filepath[:-1]
         print(filepath)
         if not os.path.exists(filepath):
@@ -96,6 +101,23 @@ def response_code(res: Response, cmd: Command, code: str):
         cmd.resp_imm = True
 
 
+# def parse_multipart_form_data(data, boundary):
+#     print('data\n' + data)
+#     parts = data.split('--' + boundary)
+#     for part in parts[1:-1]:
+#         part = part.strip()
+#         if part.startswith('Content-Disposition:'):
+#             filename = part.split('filename="')[1].split('"')[0]
+#             content_disposition = part.split('Content-Disposition: ')[1].split('\r\n')[0]
+#             contents = part.split('\r\n')
+#             if len(contents) >= 2:
+#                 content = contents[2]
+#             else:
+#                 content = ''
+#             return filename, content_disposition, content
+#     return None, None, None
+
+
 def parse_multipart_form_data(data, boundary):
     print('data\n' + data)
     parts = data.split('--' + boundary)
@@ -104,10 +126,14 @@ def parse_multipart_form_data(data, boundary):
         if part.startswith('Content-Disposition:'):
             filename = part.split('filename="')[1].split('"')[0]
             content_disposition = part.split('Content-Disposition: ')[1].split('\r\n')[0]
-            contents = part.split('\r\n')
-            if len(contents) >= 2:
-                content = contents[2]
+            # 对于非文本内容，直接获取其全部内容，不进行分割
+            if 'application/octet-stream' in content_disposition:
+                content = part.split('\r\n--' + boundary)[0]
             else:
-                content = ''
+                contents = part.split('\r\n')
+                if len(contents) >= 2:
+                    content = contents[2]
+                else:
+                    content = ''
             return filename, content_disposition, content
     return None, None, None
