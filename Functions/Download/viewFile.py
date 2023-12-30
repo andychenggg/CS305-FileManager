@@ -108,6 +108,8 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
                     responseCode(resp, cmd, "416")
                     print('Range Not Satisfiable')
                     return
+                else:
+                    return
             else:
                 print('it dose not have range')
                 resp.file_content = binary_content
