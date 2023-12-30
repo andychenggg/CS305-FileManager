@@ -70,7 +70,8 @@ def viewFile(req: Request, resp: Response, cmd: Command, config: Configuration):
             resp.body = resp.htmlM.generate_html()
         else:
             # resp.body = '[' + ', '.join(folders + files) + ']'
-            resp.body = '[' + ', '.join(f'"{item}"' for item in (folders + files)) + ']'
+            combined = sorted(folders+files)
+            resp.body = '[' + ', '.join(f'"{item}"' for item in combined) + ']'
             # resp.body = folders + files
     else:
         # check parameters is valid
