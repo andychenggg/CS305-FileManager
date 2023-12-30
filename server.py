@@ -81,7 +81,7 @@ class Server:
                     break
 
                 # print(f"data from thread {index}")
-                print(data.decode('utf-8'))
+                # print(data.decode('utf-8'))
                 resp, cmd = self.handle(data, config)
                 if cmd.chunked:
                     conn.sendall(resp_encode(resp, cmd, config))
@@ -97,7 +97,7 @@ class Server:
                 # Check if the client requests to close the connection
                 if cmd.close_conn:
                     break
-
+                print(f'close {cmd.close_conn}')
         except Exception as e:
             print(f'An error occurred in thread {index}: {e}')
         finally:
@@ -106,7 +106,7 @@ class Server:
             print(f'thread {index}: Connection closed.')
 
     def handle(self, origin_str: bytes, config: Configuration) -> (Response, Command):
-        req = Request(origin_str.decode('utf-8'))
+        req = Request(origin_str)
         print(req.headers)
         print('req path', req.path)
         resp = Response()

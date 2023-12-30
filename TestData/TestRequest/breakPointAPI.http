@@ -1,4 +1,4 @@
 ### Breakpoint Transmission
-GET http://localhost:8080/user1/a.txt
+GET http://localhost:8080/a.py
 Authorization: Basic dXNlcjE6cGFzczE=
-Range: 0-1,1-2,2-100
+Range: 0-1,1-2,2-3
