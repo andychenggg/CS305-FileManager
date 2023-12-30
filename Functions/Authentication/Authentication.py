@@ -40,6 +40,7 @@ def authorize_and_handle_head(req: Request, resp: Response, cmd: Command, config
                     cmd.skip_auth = False
                     if req.method.lower() == 'head':
                         cmd.resp_imm = True
+                        resp.body = ''
                     return
         except Exception as e:
             pass
