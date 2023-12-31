@@ -76,7 +76,7 @@ class Server:
             # Keep the connection open to handle multiple requests
             config = Configuration(index)
             while True:
-                data = conn.recv(4096)
+                data = conn.recv(40960)
                 if not data:
                     break
 
