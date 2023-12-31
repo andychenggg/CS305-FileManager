@@ -17,8 +17,10 @@ class Request:
         self.http_version: str = ""
         self.headers: dict = {}
         self.data: str = ""
+        self.upload_data: bytes = b''
         self._parse_request(request_str)
         self.paras_dict = {}
+
 
     def arg_path_para(self):
         """
@@ -67,5 +69,10 @@ class Request:
             self.headers[key.lower()] = value
 
         # Parse body (data)
-        self.data = body_section.decode('utf-8')
+        try:
+            self.data = body_section.decode('utf-8')
+            self.upload_data = body_section
+        except UnicodeDecodeError:
+            self.upload_data = body_section
+
 
