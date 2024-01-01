@@ -84,8 +84,8 @@ def uplAndDel(req: Request, resp: Response, cmd: Command, config: Configuration)
                 file_content = body
 
             # 保存文件到已知路径
-            filepath = filepath + filename
-            with open(filepath, 'wb') as f:
+            filepath1 = filepath + filename
+            with open(filepath1, 'wb') as f:
                 f.write(file_content)
 
         # boundary = req.headers['content-type'].split('boundary=')[1].encode()
