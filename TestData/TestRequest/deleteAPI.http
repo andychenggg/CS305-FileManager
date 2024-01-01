@@ -4,7 +4,12 @@ Accept: application/json
 Authorization: Basic dXNlcjE6cGFzczE=
 
 ### path is not provided
-# delete a file
-POST http://localhost:8080/delete?path=user1/a.txt
+// @no-cookie-jar
+POST http://127.0.0.1:8080/delete?path=client1/a.txt
 Accept: application/json
+Authorization: Basic Y2xpZW50MToxMjM=
 #Authorization: Basic dXNlcjE6cGFzczE=
+
+### path is not provided
+POST http://localhost:8080/delete?path=client1/aa.txt
+Accept: application/json
