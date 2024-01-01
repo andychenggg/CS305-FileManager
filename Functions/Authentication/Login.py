@@ -2,7 +2,7 @@ from Entities.Request import Request
 from Entities.Response import Response
 from Entities.Command import Command
 from Entities.Configuration import Configuration
-from Functions.Authentication.Authentication import get_cookie_str
+from Functions.Authentication.Authentication import get_cookie_str, cookie_dict
 import json
 
 with open("Functions/Authentication/userPass.json", "r") as f:
@@ -24,5 +24,7 @@ def submit_login(json_str: str) -> str:
         return failed
     elif userPass.get(form['username']) == form.get('password'):
         up = form['username'] + ':' + form['password']
-        return f'{{\"status\": 200, \"cookie\": \"{get_cookie_str(2, up)}\"}}'
+        ck_str = get_cookie_str(2, up)
+        cookie_dict[up] = ck_str
+        return f'{{\"status\": 200, \"cookie\": \"{ck_str}\"}}'
     return failed

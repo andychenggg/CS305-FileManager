@@ -31,7 +31,9 @@
                 if (response.status === 200) {
                     console.log('cookies',response)
                     document.cookie = response.cookie
+
                     window.location.href = `http://${hostname}:8080`;
+
                 } else if (response.status === 401) {
                     document.getElementById('username').value = ""
                     document.getElementById('password').value = ""
