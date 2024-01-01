@@ -28,7 +28,8 @@
                 if (response.status === 200) {
                     console.log('cookies',response)
                     document.cookie = response.cookie
-                    window.location.href = 'http://localhost:8080';
+                    console.log(window.location.href)
+                    window.location.href = window.location.href.slice(0, -6);
                 } else if (response.status === 401) {
                     document.getElementById('username').value = ""
                     document.getElementById('password').value = ""
