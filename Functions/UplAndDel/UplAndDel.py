@@ -17,12 +17,15 @@ def uplAndDel(req: Request, resp: Response, cmd: Command, config: Configuration)
     path = req.file_path
     print('path:', path, '\npara', req.paras_dict)
     print('file_path:', req.file_path)
-
-    value: str = req.headers.get("authorization")
-    code: str
-    _, code = value.split(" ")
-    decode_data = base64.b64decode(code).decode("utf-8")
-    username, password = decode_data.split(":")  # type: str, str
+    if config.user is None or config.password is None:
+        value: str = req.headers.get("authorization")
+        code: str
+        _, code = value.split(" ")
+        decode_data = base64.b64decode(code).decode("utf-8")
+        username, password = decode_data.split(":")  # type: str, str
+    else:
+        username = config.user
+        password = config.password
     if not 'path=' in req.path:
         resp.body = '400 Bad Request'
         response_code(resp, cmd, "400")
