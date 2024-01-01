@@ -10,15 +10,17 @@ class Request:
     # Range = "Range"
     # content_range = " Content-Range"
 
-    def __init__(self, request_str: str):
+    def __init__(self, request_str: bytes):
         self.method: str = ""
         self.path: str = ""
         self.file_path: str = ""
         self.http_version: str = ""
         self.headers: dict = {}
         self.data: str = ""
+        self.upload_data: bytes = b''
         self._parse_request(request_str)
         self.paras_dict = {}
+
 
     def arg_path_para(self):
         """
@@ -48,23 +50,29 @@ class Request:
                 else:
                     self.paras_dict[key_value[0].lower()] = ''
 
-    def _parse_request(self, request_str: str):
+    def _parse_request(self, request_str: bytes):
 
         # Split request into lines
-        lines = request_str.split('\r\n')
+        lines = request_str.split(b'\r\n')
 
         # Parse request line
         request_line = lines[0]
-        self.method, self.path, self.http_version = request_line.split()
+        self.method, self.path, self.http_version = request_line.decode('utf-8').split()
 
         # Separate headers and body
-        headers_section, _, body_section = request_str.partition('\r\n\r\n')
+        headers_section, _, body_section = request_str.partition(b'\r\n\r\n')
 
         # Parse headers, 所有headers的键已经全部转化为小写
-        headers_lines = headers_section.split('\r\n')[1:]  # Skip the request line
+        headers_lines = headers_section.decode('utf-8').split('\r\n')[1:]  # Skip the request line
         for line in headers_lines:
             key, value = line.split(': ', 1)
             self.headers[key.lower()] = value
 
         # Parse body (data)
-        self.data = body_section
+        try:
+            self.data = body_section.decode('utf-8')
+            self.upload_data = body_section
+        except UnicodeDecodeError:
+            self.upload_data = body_section
+
+

@@ -5,8 +5,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             let form = document.querySelector('form');
-            const socket = new WebSocket('ws://localhost:8081');
-
+            // const socket = new WebSocket('ws://localhost:8081');
+    // let form = document.querySelector('form');
+            const hostname = window.location.hostname;
+            const socket = new WebSocket('ws://' + hostname + ':8081');
+            console.log('current', hostname)
             form.onsubmit = function (e) {
                 e.preventDefault();
                 let username = document.getElementById('username').value;
@@ -28,8 +31,9 @@
                 if (response.status === 200) {
                     console.log('cookies',response)
                     document.cookie = response.cookie
-                    console.log(window.location.href)
-                    window.location.href = window.location.href.slice(0, -6);
+
+                    window.location.href = `http://${hostname}:8080`;
+
                 } else if (response.status === 401) {
                     document.getElementById('username').value = ""
                     document.getElementById('password').value = ""
